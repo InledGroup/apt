@@ -33,7 +33,7 @@ jobs:
             Name-Email: repo@inled.es
             Expire-Date: 0
             %commit
-EOF
+            EOF
             gpg --batch --generate-key gpg-key-gen
           else
             echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import

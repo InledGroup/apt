@@ -40,4 +40,8 @@ if [ -f "index.html.template" ]; then
     cp index.html.template public/index.html
 fi
 
+# Generar listado de directorios para que sea navegable como un repo Debian
+echo "Generando índices de directorios..."
+python3 generate-indexes.py public
+
 echo "Repositorio actualizado con éxito en la carpeta 'public/'"

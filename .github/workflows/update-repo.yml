@@ -50,8 +50,21 @@ jobs:
             wget "${{ github.event.inputs.deb_url }}" -O "incoming/package.deb"
           fi
 
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: packages
+          files: incoming/*.deb
+        if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+
       - name: Update repository
-        run: ./update-repo.sh
+        run: |
+          # Extraer versión del paquete para la release (opcional, usamos 'latest' por simplicidad)
+          RELEASE_TAG="packages"
+          export RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}"
+          ./update-repo.sh
+        env:
+          RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/packages
 
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy public --project-name inled-apt --branch main

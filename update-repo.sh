@@ -32,6 +32,29 @@ else
     aptly publish update -config=aptly.conf "$DISTRIBUTION" filesystem:public:
 fi
 
+# Si se proporciona una URL de Release, parchear los archivos Packages
+if [ -n "$RELEASE_URL" ]; then
+    echo "Parcheando archivos Packages para apuntar a $RELEASE_URL..."
+    python3 patch-packages.py public "$RELEASE_URL"
+    
+    # Regenerar firmas de Release (InRelease y Release.gpg)
+    # Buscamos todos los archivos Release en public/dists
+    find public/dists -name "Release" | while read release_file; do
+        dir=$(dirname "$release_file")
+        echo "Re-firmando $release_file..."
+        # Eliminar firmas antiguas
+        rm -f "$dir/InRelease" "$dir/Release.gpg"
+        # Crear Release.gpg (firma separada)
+        gpg --batch --yes --armor --detach-sign --default-key "$GPG_KEY_ID" -o "$dir/Release.gpg" "$release_file"
+        # Crear InRelease (firma embebida)
+        gpg --batch --yes --armor --clearsign --default-key "$GPG_KEY_ID" -o "$dir/InRelease" "$release_file"
+    done
+
+    # Eliminar la carpeta pool de public para no subir los .deb a Pages
+    echo "Eliminando archivos .deb de la carpeta public (se servirán desde GitHub Releases)..."
+    rm -rf public/pool
+fi
+
 # Exportar la llave pública
 gpg --armor --export "$GPG_KEY_ID" > public/archive.key
 

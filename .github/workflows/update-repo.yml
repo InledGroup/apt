@@ -1,6 +1,8 @@
 name: Update APT Repository
 
 on:
+  push:
+    branches: [main]
   repository_dispatch:
     types: [package_upload]
   workflow_dispatch:
@@ -25,15 +27,13 @@ jobs:
         run: |
           if [ -z "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
             echo "Generando llave GPG temporal..."
-            cat >gpg-key-gen <<EOF
-            %no-protection
-            Key-Type: RSA
-            Key-Length: 4096
-            Name-Real: Inled Repo
-            Name-Email: repo@inled.es
-            Expire-Date: 0
-            %commit
-            EOF
+            echo "%no-protection" > gpg-key-gen
+            echo "Key-Type: RSA" >> gpg-key-gen
+            echo "Key-Length: 4096" >> gpg-key-gen
+            echo "Name-Real: Inled Repo" >> gpg-key-gen
+            echo "Name-Email: repo@inled.es" >> gpg-key-gen
+            echo "Expire-Date: 0" >> gpg-key-gen
+            echo "%commit" >> gpg-key-gen
             gpg --batch --generate-key gpg-key-gen
           else
             echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import

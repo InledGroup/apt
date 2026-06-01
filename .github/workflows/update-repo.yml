@@ -9,6 +9,10 @@ on:
         description: 'URL of the .deb package to add'
         required: true
 
+permissions:
+  contents: write
+  deployments: write
+
 jobs:
   update-repo:
     runs-on: ubuntu-latest

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inled APT Repository</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Inled APT Repository</h1>
+    <p>Este es el repositorio oficial de paquetes para las aplicaciones de Inled.</p>
+    
+    <h2>Cómo usar este repositorio</h2>
+    <p>Para añadir este repositorio a tu sistema Ubuntu/Debian, ejecuta los siguientes comandos:</p>
+    
+    <pre>
+# 1. Descargar la llave GPG
+wget -qO- https://apt.inled.es/archive.key | gpg --dearmor | sudo tee /usr/share/keyrings/inled-archive-keyring.gpg > /dev/null
+
+# 2. Añadir el repositorio a tus fuentes
+echo "deb [signed-by=/usr/share/keyrings/inled-archive-keyring.gpg] https://apt.inled.es stable main" | sudo tee /etc/apt/sources.list.d/inled.list
+
+# 3. Actualizar e instalar
+sudo apt update
+    </pre>
+
+    <h2>Paquetes disponibles</h2>
+    <ul>
+        <li><strong>appinstall</strong> - Gestor de instalación de aplicaciones</li>
+    </ul>
+</body>
+</html>

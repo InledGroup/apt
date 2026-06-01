@@ -1,0 +1,62 @@
+name: Update APT Repository
+
+on:
+  repository_dispatch:
+    types: [package_upload]
+  workflow_dispatch:
+    inputs:
+      deb_url:
+        description: 'URL of the .deb package to add'
+        required: true
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install aptly and gpg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aptly gpg
+
+      - name: Import GPG Key
+        run: |
+          if [ -z "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+            echo "Generando llave GPG temporal..."
+            cat >gpg-key-gen <<EOF
+            %no-protection
+            Key-Type: RSA
+            Key-Length: 4096
+            Name-Real: Inled Repo
+            Name-Email: repo@inled.es
+            Expire-Date: 0
+            %commit
+EOF
+            gpg --batch --generate-key gpg-key-gen
+          else
+            echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+          fi
+
+      - name: Download package
+        run: |
+          mkdir -p incoming
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            wget "${{ github.event.client_payload.deb_url }}" -O "incoming/package.deb"
+          else
+            wget "${{ github.event.inputs.deb_url }}" -O "incoming/package.deb"
+          fi
+
+      - name: Update repository
+        run: ./update-repo.sh
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: 'inled-apt' # Nombre del proyecto en Cloudflare
+          directory: 'public'
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: 'main'

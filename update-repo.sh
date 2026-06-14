@@ -67,12 +67,12 @@ gpg --armor --export "$GPG_KEY_ID" > public/archive.key
 if [ -f "index.html.template" ]; then
     echo "Generando index.html dinámico..."
     
-    # Obtener lista de paquetes de forma fiable (formato: nombre_versión_arquitectura)
+    # Obtener lista de paquetes de forma fiable
     PACKAGES_HTML=""
     rm -f packages_html_temp.txt
     
-    # aptly repo search devuelve una lista limpia
-    aptly -config=aptly.conf repo search "$REPO_NAME" "." | sort | while read -r line; do
+    # Usamos una consulta vacía "" para listar TODOS los paquetes del repo
+    aptly -config=aptly.conf repo search "$REPO_NAME" "" | sort -V | while read -r line; do
         if [ -z "$line" ]; then continue; fi
         
         PKG_NAME=$(echo "$line" | cut -d'_' -f1)

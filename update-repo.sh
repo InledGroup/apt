@@ -19,7 +19,8 @@ fi
 # Añadir paquetes desde la carpeta 'incoming'
 if [ -d "incoming" ] && [ "$(ls -A incoming/*.deb 2>/dev/null)" ]; then
     echo "Añadiendo nuevos paquetes..."
-    aptly -config=aptly.conf repo add "$REPO_NAME" incoming/
+    # Usamos -force-replace para permitir re-subir la misma versión si es necesario
+    aptly -config=aptly.conf repo add -force-replace "$REPO_NAME" incoming/
     rm -rf incoming/*.deb
 fi
 

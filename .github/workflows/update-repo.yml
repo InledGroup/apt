@@ -11,7 +11,7 @@ on:
     inputs:
       package_url:
         description: 'URL of the .deb or .rpm package to add'
-        required: true
+        required: false
 
 permissions:
   contents: write
@@ -46,6 +46,8 @@ jobs:
           fi
 
       - name: Download package
+        id: download
+        if: github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_dispatch' && github.event.inputs.package_url != '')
         run: |
           mkdir -p incoming
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
@@ -57,13 +59,13 @@ jobs:
           wget "$URL" -O "incoming/$FILENAME"
 
       - name: Upload to GitHub Release
+        if: (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') && steps.download.conclusion == 'success'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: packages
           files: |
             incoming/*.deb
             incoming/*.rpm
-        if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
 
       - name: Update repository
         run: |

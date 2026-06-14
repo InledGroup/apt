@@ -62,26 +62,28 @@ gpg --armor --export "$GPG_KEY_ID" > public/archive.key
 if [ -f "index.html.template" ]; then
     echo "Generando index.html dinámico..."
     
-    # Intentar obtener la lista de paquetes de aptly
-    if aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" > packages_info.txt 2>/dev/null; then
+    # Intentar obtener la lista de paquetes de aptly de forma más robusta
+    # Buscamos en el repo local
+    if aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" > packages_info.txt; then
         PACKAGES_HTML=""
-        # Extraer nombres de paquetes únicos (formato: [nombre_versión_arquitectura])
-        while read -r line; do
-            if [[ $line =~ \[([^_]*)_ ]]; then
-                pkg_name="${BASH_REMATCH[1]}"
-                # Solo añadir si no está ya en el HTML (muy básico, pero funciona)
-                if [[ ! "$PACKAGES_HTML" == *"$pkg_name"* ]]; then
-                    PACKAGES_HTML+='<li class="package-item"><span class="package-name">'$pkg_name'</span></li>'
-                fi
-            fi
-        done < <(grep "Packages:" -A 100 packages_info.txt | grep "  \[")
-        rm packages_info.txt
-    else
-        # Fallback si aptly falla o no hay paquetes
+        # El formato suele ser: "  [nombre_versión_arquitectura]"
+        # Usamos sed para limpiar y extraer solo el nombre
+        grep "  \[" packages_info.txt | sed 's/  \[//; s/_.*//' | sort -u | while read -r pkg; do
+            echo "Paquete detectado: $pkg"
+            PACKAGES_HTML+='<li class="package-item"><span class="package-name">'$pkg'</span></li>'
+        done > packages_html_temp.txt
+        PACKAGES_HTML=$(cat packages_html_temp.txt)
+        rm packages_info.txt packages_html_temp.txt
+    fi
+
+    # Si la lista está vacía, ponemos los por defecto
+    if [ -z "$PACKAGES_HTML" ]; then
+        echo "Aviso: No se detectaron paquetes automáticamente, usando lista por defecto."
         PACKAGES_HTML='<li class="package-item"><span class="package-name">appinstall</span><span class="package-desc">Gestor de aplicaciones</span></li>'
         PACKAGES_HTML+='<li class="package-item"><span class="package-name">seafari</span><span class="package-desc">Navegador optimizado</span></li>'
     fi
 
+    # Usar una variable temporal para el sed para evitar problemas con caracteres especiales
     sed "s|<!-- PACKAGES_LIST_PLACEHOLDER -->|$PACKAGES_HTML|g" index.html.template > public/index.html
 fi
 

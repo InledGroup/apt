@@ -60,7 +60,29 @@ gpg --armor --export "$GPG_KEY_ID" > public/archive.key
 
 # Copiar el index.html si existe la plantilla
 if [ -f "index.html.template" ]; then
-    cp index.html.template public/index.html
+    echo "Generando index.html dinámico..."
+    
+    # Intentar obtener la lista de paquetes de aptly
+    if aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" > packages_info.txt 2>/dev/null; then
+        PACKAGES_HTML=""
+        # Extraer nombres de paquetes únicos (formato: [nombre_versión_arquitectura])
+        while read -r line; do
+            if [[ $line =~ \[([^_]*)_ ]]; then
+                pkg_name="${BASH_REMATCH[1]}"
+                # Solo añadir si no está ya en el HTML (muy básico, pero funciona)
+                if [[ ! "$PACKAGES_HTML" == *"$pkg_name"* ]]; then
+                    PACKAGES_HTML+='<li class="package-item"><span class="package-name">'$pkg_name'</span></li>'
+                fi
+            fi
+        done < <(grep "Packages:" -A 100 packages_info.txt | grep "  \[")
+        rm packages_info.txt
+    else
+        # Fallback si aptly falla o no hay paquetes
+        PACKAGES_HTML='<li class="package-item"><span class="package-name">appinstall</span><span class="package-desc">Gestor de aplicaciones</span></li>'
+        PACKAGES_HTML+='<li class="package-item"><span class="package-name">seafari</span><span class="package-desc">Navegador optimizado</span></li>'
+    fi
+
+    sed "s|<!-- PACKAGES_LIST_PLACEHOLDER -->|$PACKAGES_HTML|g" index.html.template > public/index.html
 fi
 
 # Asegurar carpeta de skills y copiar contenido si existe en la raíz

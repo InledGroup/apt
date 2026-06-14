@@ -1,36 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Inled APT Repository</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inled Repository</title>
     <style>
-        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
-        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        :root {
+            --primary: #0052cc;
+            --primary-hover: #0065ff;
+            --bg: #f4f7fa;
+            --card-bg: #ffffff;
+            --text: #172b4d;
+            --text-muted: #6b778c;
+            --code-bg: #f1f2f4;
+            --border: #dfe1e6;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo {
+            max-width: 250px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--primary); }
+        .description { font-size: 1.2rem; color: var(--text-muted); }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+        h2 { margin-top: 0; border-bottom: 2px solid var(--code-bg); padding-bottom: 10px; }
+        h3 { color: var(--primary); margin-top: 25px; }
+        
+        pre {
+            background: var(--code-bg);
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            position: relative;
+        }
+        code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+        
+        .package-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .package-item {
+            background: var(--code-bg);
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+        }
+        .package-name { font-weight: bold; display: block; }
+        .package-desc { font-size: 0.85rem; color: var(--text-muted); }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover { background: var(--primary-hover); }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        .alert-info { background: #deebff; color: #0747a6; border: 1px solid #b3d4ff; }
+        .alert-warning { background: #fffae6; color: #826a00; border: 1px solid #fff0b3; }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-bottom: 40px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 600px) {
+            .container { margin: 20px auto; }
+            h1 { font-size: 1.8rem; }
+        }
     </style>
 </head>
 <body>
-    <h1>Inled APT Repository</h1>
-    <p>Este es el repositorio oficial de paquetes para las aplicaciones de Inled.</p>
-    
-    <h2>Cómo usar este repositorio</h2>
-    
-    <h3>Ubuntu / Debian (APT)</h3>
-    <p>Ejecuta los siguientes comandos para añadir el repositorio:</p>
-    <pre>
-# 1. Descargar la llave GPG
+    <div class="container">
+        <header>
+            <img src="https://hosted.inled.es/inled-logo-full.png" alt="Inled Logo" class="logo">
+            <p class="description">Repositorio oficial de paquetes para las aplicaciones de Inled.</p>
+        </header>
+
+        <section class="card">
+            <h2>📦 Paquetes disponibles</h2>
+            <div id="packages-container">
+                <ul class="package-list">
+                    <!-- PACKAGES_LIST_PLACEHOLDER -->
+                    <li class="package-item">
+                        <span class="package-name">Cargando paquetes...</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>🚀 Cómo usar este repositorio</h2>
+            
+            <h3>Ubuntu / Debian (APT)</h3>
+            <pre><code># 1. Descargar la llave GPG
 wget -qO- https://apt.inled.es/archive.key | gpg --dearmor | sudo tee /usr/share/keyrings/inled-archive-keyring.gpg > /dev/null
 
 # 2. Añadir el repositorio
 echo "deb [signed-by=/usr/share/keyrings/inled-archive-keyring.gpg] https://apt.inled.es stable main" | sudo tee /etc/apt/sources.list.d/inled.list
 
 # 3. Actualizar e instalar
-sudo apt update
-    </pre>
+sudo apt update</code></pre>
 
-    <h3>Fedora / RHEL / CentOS (DNF/YUM)</h3>
-    <p>Crea el archivo de configuración del repositorio:</p>
-    <pre>
-# Crea el archivo /etc/yum.repos.d/inled.repo con este contenido:
+            <div class="alert alert-warning">
+                <strong>¿Problemas con apt update?</strong><br>
+                Si recibes errores de "malformed line" o "NOSPLIT", verifica que el archivo <code>/etc/apt/sources.list.d/inled.list</code> contenga una sola línea y que no termine en barra diagonal (/) después de <code>stable main</code>.
+            </div>
+
+            <h3>Fedora / RHEL / CentOS (DNF/YUM)</h3>
+            <pre><code># Crear el archivo de configuración
 sudo tee /etc/yum.repos.d/inled.repo <<EOF
 [inled]
 name=Inled Repository
@@ -41,16 +164,19 @@ repo_gpgcheck=1
 gpgkey=https://apt.inled.es/archive.key
 EOF
 
-# Luego instala tus paquetes
-sudo dnf install &lt;nombre-del-paquete&gt;
-    </pre>
+# Instalar paquetes
+sudo dnf install &lt;paquete&gt;</code></pre>
+        </section>
 
-    <h2>Paquetes disponibles</h2>
-    <ul>
-        <li><strong>appinstall</strong> - Gestor de instalación de aplicaciones</li>
-    </ul>
+        <section class="card" style="text-align: center; background: linear-gradient(135deg, #0052cc 0%, #002e73 100%); color: white;">
+            <h2 style="color: white; border-bottom-color: rgba(255,255,255,0.2);">🛠️ Zona Desarrolladores</h2>
+            <p>Aprende a integrar este repositorio en tus procesos de CI/CD y desplegar apps automáticamente.</p>
+            <a href="/skills/inled-repo-support.md" class="btn" style="background: white; color: var(--primary); margin-top: 10px;">Ver Skill para Gemini CLI</a>
+        </section>
 
-    <hr>
-    <p>💡 <strong>¿Eres desarrollador?</strong> Descarga nuestra <a href="/skills/inled-repo-support.md">Skill para Gemini CLI</a> para aprender a implementar este sistema en tus propios repositorios.</p>
+        <footer>
+            &copy; 2026 Inled Group. Servido vía Cloudflare Pages.
+        </footer>
+    </div>
 </body>
 </html>

@@ -66,28 +66,56 @@ gpg --armor --export "$GPG_KEY_ID" > public/archive.key
 if [ -f "index.html.template" ]; then
     echo "Generando index.html dinámico..."
     
-    # Intentar obtener la lista de paquetes de aptly de forma más robusta
-    # Buscamos en el repo local
-    if aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" > packages_info.txt; then
-        PACKAGES_HTML=""
-        # El formato suele ser: "  [nombre_versión_arquitectura]"
-        # Usamos sed para limpiar y extraer solo el nombre
-        grep "  \[" packages_info.txt | sed 's/  \[//; s/_.*//' | sort -u | while read -r pkg; do
-            echo "Paquete detectado: $pkg"
-            PACKAGES_HTML+='<li class="package-item"><span class="package-name">'$pkg'</span></li>'
-        done > packages_html_temp.txt
+    # Extraer información de paquetes (Nombre, Versión, Arquitectura)
+    # Formato: [paquete_versión_arquitectura]
+    PACKAGES_HTML=""
+    aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" > packages_info.txt
+    
+    # Procesar cada paquete detectado
+    grep "  \[" packages_info.txt | sed 's/  \[//; s/\]//' | while read -r line; do
+        PKG_NAME=$(echo "$line" | cut -d'_' -f1)
+        PKG_VER=$(echo "$line" | cut -d'_' -f2)
+        PKG_ARCH=$(echo "$line" | cut -d'_' -f3)
+        
+        echo "Procesando para web: $PKG_NAME ($PKG_VER)"
+        
+        # Intentar obtener descripción si aptly la tiene (opcional)
+        DESC="Paquete para $PKG_NAME"
+        if [ "$PKG_NAME" == "appinstall" ]; then DESC="Gestor de aplicaciones multiplataforma"; fi
+        if [ "$PKG_NAME" == "seafari" ]; then DESC="Navegador web optimizado"; fi
+        
+        # Enlace de descarga (apuntando a GitHub via nuestra variable de entorno)
+        # Usamos el nombre de archivo estándar de Debian
+        DEB_FILE="${PKG_NAME}_${PKG_VER}_${PKG_ARCH}.deb"
+        DOWNLOAD_URL="${RELEASE_URL}/${DEB_FILE}"
+        
+        # Construir el HTML de la card
+        ITEM_HTML='<li class="package-item">'
+        ITEM_HTML+='<div class="package-header">'
+        ITEM_HTML+='<span class="package-name">'$PKG_NAME'</span>'
+        ITEM_HTML+='<span class="package-version">v'$PKG_VER'</span>'
+        ITEM_HTML+='</div>'
+        ITEM_HTML+='<p class="package-desc">'$DESC'</p>'
+        ITEM_HTML+='<div class="package-footer">'
+        ITEM_HTML+='<a href="'$DOWNLOAD_URL'" class="btn btn-sm">⬇️ Descargar .deb</a>'
+        ITEM_HTML+='</div>'
+        ITEM_HTML+='</li>'
+        
+        echo "$ITEM_HTML" >> packages_html_temp.txt
+    done
+
+    if [ -f "packages_html_temp.txt" ]; then
         PACKAGES_HTML=$(cat packages_html_temp.txt)
-        rm packages_info.txt packages_html_temp.txt
+        rm packages_html_temp.txt
     fi
+    rm packages_info.txt
 
-    # Si la lista está vacía, ponemos los por defecto
+    # Si la lista está vacía, poner mensaje
     if [ -z "$PACKAGES_HTML" ]; then
-        echo "Aviso: No se detectaron paquetes automáticamente, usando lista por defecto."
-        PACKAGES_HTML='<li class="package-item"><span class="package-name">appinstall</span><span class="package-desc">Gestor de aplicaciones</span></li>'
-        PACKAGES_HTML+='<li class="package-item"><span class="package-name">seafari</span><span class="package-desc">Navegador optimizado</span></li>'
+        PACKAGES_HTML='<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No hay paquetes disponibles en este momento.</p>'
     fi
 
-    # Usar una variable temporal para el sed para evitar problemas con caracteres especiales
+    # Generar el archivo final
     sed "s|<!-- PACKAGES_LIST_PLACEHOLDER -->|$PACKAGES_HTML|g" index.html.template > public/index.html
 fi
 

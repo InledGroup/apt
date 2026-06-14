@@ -63,8 +63,11 @@ jobs:
           else
             URL="${{ github.event.inputs.package_url }}"
           fi
+          # Eliminar espacios en blanco accidentales
+          URL=$(echo "$URL" | xargs)
           FILENAME=$(basename "$URL")
-          wget "$URL" -O "incoming/$FILENAME"
+          echo "Descargando $URL..."
+          wget -q "$URL" -O "incoming/$FILENAME"
 
       - name: Upload to GitHub Release
         if: (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') && steps.download.conclusion == 'success'

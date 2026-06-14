@@ -72,4 +72,18 @@ if [ -f "./update-rpm-repo.sh" ]; then
     bash ./update-rpm-repo.sh
 fi
 
+# Crear archivo _headers para Cloudflare Pages
+echo "Creando archivo _headers para Cloudflare Pages..."
+cat <<EOF > public/_headers
+/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=0, must-revalidate
+/dists/*
+  Content-Type: text/plain; charset=utf-8
+/pool/*
+  Content-Type: application/vnd.debian.binary-package
+/skills/*.md
+  Content-Type: text/markdown; charset=utf-8
+EOF
+
 echo "Repositorio actualizado con éxito en la carpeta 'public/'"

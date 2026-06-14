@@ -67,30 +67,27 @@ gpg --armor --export "$GPG_KEY_ID" > public/archive.key
 if [ -f "index.html.template" ]; then
     echo "Generando index.html dinámico..."
     
-    # Extraer información de paquetes (Nombre, Versión, Arquitectura)
-    # Formato: [paquete_versión_arquitectura]
+    # Obtener lista de paquetes de forma fiable (formato: nombre_versión_arquitectura)
     PACKAGES_HTML=""
-    aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" > packages_info.txt
+    rm -f packages_html_temp.txt
     
-    # Procesar cada paquete detectado
-    grep "  \[" packages_info.txt | sed 's/  \[//; s/\]//' | while read -r line; do
+    # aptly repo search devuelve una lista limpia
+    aptly -config=aptly.conf repo search "$REPO_NAME" "." | sort | while read -r line; do
+        if [ -z "$line" ]; then continue; fi
+        
         PKG_NAME=$(echo "$line" | cut -d'_' -f1)
         PKG_VER=$(echo "$line" | cut -d'_' -f2)
         PKG_ARCH=$(echo "$line" | cut -d'_' -f3)
         
         echo "Procesando para web: $PKG_NAME ($PKG_VER)"
         
-        # Intentar obtener descripción si aptly la tiene (opcional)
         DESC="Paquete para $PKG_NAME"
         if [ "$PKG_NAME" == "appinstall" ]; then DESC="Gestor de aplicaciones multiplataforma"; fi
         if [ "$PKG_NAME" == "seafari" ]; then DESC="Navegador web optimizado"; fi
         
-        # Enlace de descarga (apuntando a GitHub via nuestra variable de entorno)
-        # Usamos el nombre de archivo estándar de Debian
         DEB_FILE="${PKG_NAME}_${PKG_VER}_${PKG_ARCH}.deb"
         DOWNLOAD_URL="${RELEASE_URL}/${DEB_FILE}"
         
-        # Construir el HTML de la card
         ITEM_HTML='<li class="package-item">'
         ITEM_HTML+='<div class="package-header">'
         ITEM_HTML+='<span class="package-name">'$PKG_NAME'</span>'
@@ -106,18 +103,14 @@ if [ -f "index.html.template" ]; then
     done
 
     if [ -f "packages_html_temp.txt" ]; then
-        PACKAGES_HTML=$(cat packages_html_temp.txt)
+        # Usar un archivo temporal para la sustitución para evitar problemas con sed y variables largas
+        sed -e '/<!-- PACKAGES_LIST_PLACEHOLDER -->/r packages_html_temp.txt' -e '/<!-- PACKAGES_LIST_PLACEHOLDER -->/d' index.html.template > public/index.html
         rm packages_html_temp.txt
+    else
+        echo "No se encontraron paquetes para listar."
+        EMPTY_MSG='<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No hay paquetes disponibles en este momento.</p>'
+        sed "s|<!-- PACKAGES_LIST_PLACEHOLDER -->|$EMPTY_MSG|g" index.html.template > public/index.html
     fi
-    rm packages_info.txt
-
-    # Si la lista está vacía, poner mensaje
-    if [ -z "$PACKAGES_HTML" ]; then
-        PACKAGES_HTML='<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No hay paquetes disponibles en este momento.</p>'
-    fi
-
-    # Generar el archivo final
-    sed "s|<!-- PACKAGES_LIST_PLACEHOLDER -->|$PACKAGES_HTML|g" index.html.template > public/index.html
 fi
 
 # Asegurar carpeta de skills y copiar contenido si existe en la raíz

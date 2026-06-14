@@ -127,9 +127,6 @@
             <div id="packages-container">
                 <ul class="package-list">
                     <!-- PACKAGES_LIST_PLACEHOLDER -->
-                    <li class="package-item">
-                        <span class="package-name">Cargando paquetes...</span>
-                    </li>
                 </ul>
             </div>
         </section>

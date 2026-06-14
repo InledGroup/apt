@@ -13,22 +13,44 @@
     <p>Este es el repositorio oficial de paquetes para las aplicaciones de Inled.</p>
     
     <h2>Cómo usar este repositorio</h2>
-    <p>Para añadir este repositorio a tu sistema Ubuntu/Debian, ejecuta los siguientes comandos:</p>
     
+    <h3>Ubuntu / Debian (APT)</h3>
+    <p>Ejecuta los siguientes comandos para añadir el repositorio:</p>
     <pre>
 # 1. Descargar la llave GPG
 wget -qO- https://apt.inled.es/archive.key | gpg --dearmor | sudo tee /usr/share/keyrings/inled-archive-keyring.gpg > /dev/null
 
-# 2. Añadir el repositorio a tus fuentes
+# 2. Añadir el repositorio
 echo "deb [signed-by=/usr/share/keyrings/inled-archive-keyring.gpg] https://apt.inled.es stable main" | sudo tee /etc/apt/sources.list.d/inled.list
 
 # 3. Actualizar e instalar
 sudo apt update
     </pre>
 
+    <h3>Fedora / RHEL / CentOS (DNF/YUM)</h3>
+    <p>Crea el archivo de configuración del repositorio:</p>
+    <pre>
+# Crea el archivo /etc/yum.repos.d/inled.repo con este contenido:
+sudo tee /etc/yum.repos.d/inled.repo <<EOF
+[inled]
+name=Inled Repository
+baseurl=https://apt.inled.es/rpm/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://apt.inled.es/archive.key
+EOF
+
+# Luego instala tus paquetes
+sudo dnf install &lt;nombre-del-paquete&gt;
+    </pre>
+
     <h2>Paquetes disponibles</h2>
     <ul>
         <li><strong>appinstall</strong> - Gestor de instalación de aplicaciones</li>
     </ul>
+
+    <hr>
+    <p>💡 <strong>¿Eres desarrollador?</strong> Descarga nuestra <a href="/skills/inled-repo-support.md">Skill para Gemini CLI</a> para aprender a implementar este sistema en tus propios repositorios.</p>
 </body>
 </html>

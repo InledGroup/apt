@@ -1,12 +1,12 @@
-name: Update APT Repository
+name: Update Repositories
 
 on:
   repository_dispatch:
     types: [package_upload]
   workflow_dispatch:
     inputs:
-      deb_url:
-        description: 'URL of the .deb package to add'
+      package_url:
+        description: 'URL of the .deb or .rpm package to add'
         required: true
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
       - name: Install aptly and gpg
         run: |
           sudo apt-get update
-          sudo apt-get install -y aptly gpg
+          sudo apt-get install -y aptly gpg createrepo_c
 
       - name: Import GPG Key
         run: |
@@ -45,16 +45,20 @@ jobs:
         run: |
           mkdir -p incoming
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
-            wget "${{ github.event.client_payload.deb_url }}" -O "incoming/package.deb"
+            URL="${{ github.event.client_payload.package_url || github.event.client_payload.deb_url }}"
           else
-            wget "${{ github.event.inputs.deb_url }}" -O "incoming/package.deb"
+            URL="${{ github.event.inputs.package_url }}"
           fi
+          FILENAME=$(basename "$URL")
+          wget "$URL" -O "incoming/$FILENAME"
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: packages
-          files: incoming/*.deb
+          files: |
+            incoming/*.deb
+            incoming/*.rpm
         if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
 
       - name: Update repository

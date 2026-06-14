@@ -67,4 +67,9 @@ fi
 echo "Generando índices de directorios..."
 python3 generate-indexes.py public
 
+# Actualizar repositorio RPM si existe el script
+if [ -f "./update-rpm-repo.sh" ]; then
+    bash ./update-rpm-repo.sh
+fi
+
 echo "Repositorio actualizado con éxito en la carpeta 'public/'"

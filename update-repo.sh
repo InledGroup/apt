@@ -63,6 +63,12 @@ if [ -f "index.html.template" ]; then
     cp index.html.template public/index.html
 fi
 
+# Asegurar carpeta de skills y copiar contenido si existe en la raíz
+mkdir -p public/skills
+if [ -d "skills" ]; then
+    cp -r skills/* public/skills/
+fi
+
 # Generar listado de directorios para que sea navegable como un repo Debian
 echo "Generando índices de directorios..."
 python3 generate-indexes.py public

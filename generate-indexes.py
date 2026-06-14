@@ -69,6 +69,11 @@ def walk_and_index(base_dir):
         relative_url = root.replace(base_dir, "")
         if not relative_url: relative_url = "/"
         
+        # Saltar la carpeta de skills para no sobrescribir los archivos .md o .skill
+        if "skills" in root.split(os.sep):
+            print(f"Saltando índice para {relative_url} (directorio de skills)...")
+            continue
+            
         # Si es la raíz y ya existe un index.html (copiado de la plantilla), no lo sobrescribas
         if relative_url == "/" and os.path.exists(os.path.join(root, "index.html")):
             print(f"Saltando índice para la raíz (ya existe index.html personalizado)...")

@@ -23,6 +23,10 @@ if [ -d "incoming" ] && [ "$(ls -A incoming/*.deb 2>/dev/null)" ]; then
     rm -rf incoming/*.deb
 fi
 
+# Listar paquetes en el repositorio para depuración
+echo "Estado actual del repositorio $REPO_NAME:"
+aptly -config=aptly.conf repo show -with-packages "$REPO_NAME"
+
 # Publicar el repositorio (o actualizar la publicación)
 if ! aptly -config=aptly.conf publish list | grep -q "$DISTRIBUTION"; then
     echo "Publicando por primera vez..."

@@ -29,6 +29,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y aptly gpg createrepo-c
 
+      - name: Restore Aptly database
+        uses: actions/cache@v4
+        with:
+          path: .aptly
+          key: ${{ runner.os }}-aptly-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-aptly-
+
       - name: Import GPG Key
         run: |
           if [ -z "${{ secrets.GPG_PRIVATE_KEY }}" ]; then

@@ -68,6 +68,12 @@ def walk_and_index(base_dir):
     for root, dirs, files in os.walk(base_dir):
         relative_url = root.replace(base_dir, "")
         if not relative_url: relative_url = "/"
+        
+        # Si es la raíz y ya existe un index.html (copiado de la plantilla), no lo sobrescribas
+        if relative_url == "/" and os.path.exists(os.path.join(root, "index.html")):
+            print(f"Saltando índice para la raíz (ya existe index.html personalizado)...")
+            continue
+            
         print(f"Generando índice para {relative_url}...")
         generate_index(root, relative_url)
 

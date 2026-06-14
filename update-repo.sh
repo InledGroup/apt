@@ -34,7 +34,8 @@ if ! aptly -config=aptly.conf publish list | grep -q "$DISTRIBUTION"; then
     aptly publish repo -config=aptly.conf -distribution="$DISTRIBUTION" "$REPO_NAME" filesystem:public:
 else
     echo "Actualizando publicación..."
-    aptly publish update -config=aptly.conf "$DISTRIBUTION" filesystem:public:
+    # Forzamos overwrite para asegurar que los metadatos se regeneran siempre
+    aptly publish update -force-overwrite -config=aptly.conf "$DISTRIBUTION" filesystem:public:
 fi
 
 # Si se proporciona una URL de Release, parchear los archivos Packages
@@ -68,11 +69,11 @@ if [ -f "index.html.template" ]; then
     echo "Generando index.html dinámico..."
     
     # Obtener lista de paquetes de forma fiable
-    PACKAGES_HTML=""
     rm -f packages_html_temp.txt
     
-    # Usamos una consulta vacía "" para listar TODOS los paquetes del repo
-    aptly -config=aptly.conf repo search "$REPO_NAME" "" | sort -V | while read -r line; do
+    # Extraemos los paquetes directamente de la descripción del repo
+    # Formato esperado: [nombre_versión_arquitectura]
+    aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" | grep "  \[" | sed 's/  \[//; s/\]//' | sort -V | while read -r line; do
         if [ -z "$line" ]; then continue; fi
         
         PKG_NAME=$(echo "$line" | cut -d'_' -f1)
@@ -88,27 +89,28 @@ if [ -f "index.html.template" ]; then
         DEB_FILE="${PKG_NAME}_${PKG_VER}_${PKG_ARCH}.deb"
         DOWNLOAD_URL="${RELEASE_URL}/${DEB_FILE}"
         
-        ITEM_HTML='<li class="package-item">'
-        ITEM_HTML+='<div class="package-header">'
-        ITEM_HTML+='<span class="package-name">'$PKG_NAME'</span>'
-        ITEM_HTML+='<span class="package-version">v'$PKG_VER'</span>'
-        ITEM_HTML+='</div>'
-        ITEM_HTML+='<p class="package-desc">'$DESC'</p>'
-        ITEM_HTML+='<div class="package-footer">'
-        ITEM_HTML+='<a href="'$DOWNLOAD_URL'" class="btn btn-sm">⬇️ Descargar .deb</a>'
-        ITEM_HTML+='</div>'
-        ITEM_HTML+='</li>'
+        # Construir el HTML de la card
+        ITEM_HTML="<li class=\"package-item\">"
+        ITEM_HTML+="<div class=\"package-header\">"
+        ITEM_HTML+="<span class=\"package-name\">$PKG_NAME</span>"
+        ITEM_HTML+="<span class=\"package-version\">v$PKG_VER</span>"
+        ITEM_HTML+="</div>"
+        ITEM_HTML+="<p class=\"package-desc\">$DESC</p>"
+        ITEM_HTML+="<div class=\"package-footer\">"
+        ITEM_HTML+="<a href=\"$DOWNLOAD_URL\" class=\"btn btn-sm\">⬇️ Descargar .deb</a>"
+        ITEM_HTML+="</div>"
+        ITEM_HTML+="</li>"
         
         echo "$ITEM_HTML" >> packages_html_temp.txt
     done
 
-    if [ -f "packages_html_temp.txt" ]; then
-        # Usar un archivo temporal para la sustitución para evitar problemas con sed y variables largas
+    if [ -s "packages_html_temp.txt" ]; then
+        # Usar un archivo temporal para la sustitución para evitar problemas con sed
         sed -e '/<!-- PACKAGES_LIST_PLACEHOLDER -->/r packages_html_temp.txt' -e '/<!-- PACKAGES_LIST_PLACEHOLDER -->/d' index.html.template > public/index.html
         rm packages_html_temp.txt
     else
-        echo "No se encontraron paquetes para listar."
-        EMPTY_MSG='<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No hay paquetes disponibles en este momento.</p>'
+        echo "Aviso: No se encontraron paquetes para listar en la web."
+        EMPTY_MSG="<p style=\"grid-column: 1/-1; text-align: center; color: var(--text-muted);\">No hay paquetes disponibles en este momento.</p>"
         sed "s|<!-- PACKAGES_LIST_PLACEHOLDER -->|$EMPTY_MSG|g" index.html.template > public/index.html
     fi
 fi

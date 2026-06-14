@@ -17,6 +17,10 @@ permissions:
   contents: write
   deployments: write
 
+concurrency:
+  group: aptly-repo
+  cancel-in-progress: false
+
 jobs:
   update-repo:
     runs-on: ubuntu-latest

@@ -1,137 +1,42 @@
 import os
-import re
 import sys
-import hashlib
 
-def get_file_stats(path):
+def generate_redirects(base_dir, release_url):
     """
-    Calculates size and hashes (MD5, SHA1, SHA256, SHA512) of a file.
-    Calcula el tamaño y hashes (MD5, SHA1, SHA256, SHA512) de un archivo.
+    Generates a Cloudflare Pages _redirects file mapping local pool paths to GitHub Releases.
+    Genera un archivo _redirects para Cloudflare Pages mapeando las rutas locales a GitHub Releases.
     """
-    with open(path, 'rb') as f:
-        data = f.read()
-    return {
-        'size': len(data),
-        'md5': hashlib.md5(data).hexdigest(),
-        'sha1': hashlib.sha1(data).hexdigest(),
-        'sha256': hashlib.sha256(data).hexdigest(),
-        'sha512': hashlib.sha512(data).hexdigest()
-    }
-
-def patch_packages_file(packages_path, release_url_base):
-    """
-    Patches the Packages file so Filename points to an absolute URL.
-    Parchea el archivo Packages para que Filename apunte a una URL absoluta.
-    """
-    if not os.path.exists(packages_path):
-        return False
-
-    with open(packages_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-
-    # Split by double newline to separate records
-    # Separar por doble salto de línea para procesar cada paquete individualmente
-    records = re.split(r'\n\n+', content)
-    new_records = []
-
-    for record in records:
-        if not record.strip():
-            continue
+    redirects_path = os.path.join(base_dir, "_redirects")
+    
+    # We overwrite the file or create it if it doesn't exist
+    # Sobrescribimos el archivo o lo creamos si no existe
+    with open(redirects_path, "w", encoding="utf-8") as f:
+        f.write("# Cloudflare Pages Redirects for Inled Repo\n")
+        f.write("# Forcing APT and DNF to follow GitHub Releases\n\n")
         
-        # Replace Filename: path/to/file.deb -> Filename: URL/file.deb
-        # Reemplazar la ruta local del archivo por la URL absoluta de GitHub Releases
-        match = re.search(r'^Filename: (.*)$', record, re.MULTILINE)
-        if match:
-            basename = os.path.basename(match.group(1))
-            new_filename = f"{release_url_base}/{basename}"
-            record = re.sub(r'^Filename: .*$', f"Filename: {new_filename}", record, flags=re.MULTILINE)
-        
-        new_records.append(record.strip())
+        # 1. Process APT pool (Debian/Ubuntu)
+        pool_dir = os.path.join(base_dir, "pool")
+        if os.path.exists(pool_dir):
+            print(f"Scanning APT pool: {pool_dir}")
+            for root, dirs, files in os.walk(pool_dir):
+                for file in files:
+                    if file.endswith(".deb"):
+                        full_path = os.path.join(root, file)
+                        # Get path relative to the public root (e.g. pool/main/a/...)
+                        rel_path = os.path.relpath(full_path, base_dir)
+                        # Cloudflare format: /source-path target-url 302
+                        f.write(f"/{rel_path} {release_url}/{file} 302\n")
+                        print(f"  + Redirect: /{rel_path} -> {file}")
 
-    if not new_records:
-        return False
-
-    # Write back the patched content
-    # Escribir el contenido parcheado de nuevo en el archivo
-    with open(packages_path, 'w', encoding='utf-8') as f:
-        f.write('\n\n'.join(new_records) + '\n\n')
-    
-    print(f"  - Patched {packages_path}")
-    return True
-
-def update_release_file(release_path):
-    """
-    Updates the Release file recalculating hashes and removing non-existent files.
-    Actualiza el archivo Release recalculando hashes y eliminando archivos inexistentes.
-    """
-    if not os.path.exists(release_path):
-        return
-    
-    print(f"  - Updating {release_path}...")
-    with open(release_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    release_dir = os.path.dirname(release_path)
-    new_lines = []
-    current_section = None
-    
-    # Hash section headers
-    # Cabeceras de las secciones de hashes en el archivo Release
-    sections = {
-        'MD5Sum:': 'md5',
-        'SHA1:': 'sha1',
-        'SHA256:': 'sha256',
-        'SHA512:': 'sha512'
-    }
-    
-    for line in lines:
-        stripped = line.strip()
-        
-        # Check if we are entering a hash section
-        # Detectar si entramos en una sección de hashes
-        found_section = False
-        for s_header, s_key in sections.items():
-            if line.startswith(s_header):
-                current_section = s_key
-                new_lines.append(line)
-                found_section = True
-                break
-        if found_section:
-            continue
-        
-        # If line doesn't start with space, we are out of a hash section
-        # Si la línea no empieza con espacio, hemos salido de la sección de hashes
-        if not line.startswith(' '):
-            current_section = None
-            new_lines.append(line)
-            continue
-            
-        # If we are in a hash section, process the file entry
-        # Si estamos en una sección de hashes, procesamos la entrada del archivo
-        if current_section and line.startswith(' '):
-            parts = stripped.split()
-            if len(parts) == 3:
-                # Format: <hash> <size> <relative_path>
-                file_rel_path = parts[2]
-                full_path = os.path.join(release_dir, file_rel_path)
-                
-                if os.path.exists(full_path):
-                    # Recalculate stats for existing files
-                    # Recalcular estadísticas para archivos existentes
-                    stats = get_file_stats(full_path)
-                    new_lines.append(f" {stats[current_section]} {stats['size']} {file_rel_path}\n")
-                else:
-                    # File does not exist (e.g. deleted Packages.gz), omit it to force APT to use Packages
-                    # El archivo no existe (ej: Packages.gz borrado), lo omitimos para forzar a APT a usar Packages plano
-                    print(f"    [!] Removing reference to missing file: {file_rel_path}")
-                    continue
-            else:
-                new_lines.append(line)
-        else:
-            new_lines.append(line)
-            
-    with open(release_path, 'w', encoding='utf-8') as f:
-        f.writelines(new_lines)
+        # 2. Process RPM packages (Fedora/RHEL)
+        # Even if we don't delete the RPM dir, redirects ensure they always get the latest from GitHub
+        rpm_dir = os.path.join(base_dir, "rpm")
+        if os.path.exists(rpm_dir):
+            print(f"Scanning RPM directory: {rpm_dir}")
+            for file in os.listdir(rpm_dir):
+                if file.endswith(".rpm"):
+                    f.write(f"/rpm/{file} {release_url}/{file} 302\n")
+                    print(f"  + Redirect: /rpm/{file} -> {file}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
@@ -139,30 +44,14 @@ if __name__ == "__main__":
         sys.exit(1)
         
     base_dir = sys.argv[1]
-    release_url = sys.argv[2]
+    # Clean trailing slash from release_url
+    release_url = sys.argv[2].rstrip('/')
     
-    print(f"--- Starting metadata patching in {base_dir} ---")
+    print(f"--- Starting redirect generation for {base_dir} ---")
+    generate_redirects(base_dir, release_url)
+    print("--- Redirect generation completed ---")
     
-    # 1. Patch Packages files and remove compressed versions
-    # 1. Parchear archivos Packages y eliminar versiones comprimidas
-    for root, dirs, files in os.walk(base_dir):
-        if "Packages" in files:
-            pkg_path = os.path.join(root, "Packages")
-            patch_packages_file(pkg_path, release_url)
-            
-            # Remove compressed versions to force APT to use the patched Packages file
-            # Borrar versiones comprimidas para obligar a APT a usar el archivo Packages parcheado
-            for ext in [".gz", ".bz2", ".lzma", ".xz"]:
-                comp_path = pkg_path + ext
-                if os.path.exists(comp_path):
-                    os.remove(comp_path)
-                    print(f"  - Removed {comp_path}")
-
-    # 2. Update Release files
-    # 2. Actualizar archivos Release
-    for root, dirs, files in os.walk(base_dir):
-        if "Release" in files:
-            release_path = os.path.join(root, "Release")
-            update_release_file(release_path)
-
-    print("--- Metadata patching completed ---")
+    # Note: We no longer patch the Packages files or delete compressed versions here.
+    # The original aptly files are now correct as we serve them via redirects.
+    # Nota: Ya no parcheamos los archivos Packages ni borramos las versiones comprimidas aquí.
+    # Los archivos originales de aptly ahora son correctos ya que servimos vía redirecciones.

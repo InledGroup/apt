@@ -72,8 +72,9 @@ if [ -f "index.html.template" ]; then
     rm -f packages_html_temp.txt
     
     # Extraemos los paquetes directamente de la descripción del repo
-    # Formato esperado: [nombre_versión_arquitectura]
-    aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" | grep "  \[" | sed 's/  \[//; s/\]//' | sort -V | while read -r line; do
+    # Formato esperado:   paquete_versión_arquitectura
+    # Usamos awk para quedarnos solo con la versión más reciente de cada paquete
+    aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" | sed -n '/Packages:/,$p' | grep -v "Packages:" | sed 's/^  *//' | sort -V -r | awk -F_ '!seen[$1]++' | sort | while read -r line; do
         if [ -z "$line" ]; then continue; fi
         
         PKG_NAME=$(echo "$line" | cut -d'_' -f1)

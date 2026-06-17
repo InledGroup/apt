@@ -90,6 +90,10 @@ def generate_html(release_url):
     rpm_pkgs = get_rpm_packages("public/rpm")
     arch_pkgs = get_arch_packages("public/arch")
     
+    print(f"Found {len(apt_pkgs)} APT packages")
+    print(f"Found {len(rpm_pkgs)} RPM packages")
+    print(f"Found {len(arch_pkgs)} Arch packages")
+    
     all_pkgs = apt_pkgs + rpm_pkgs + arch_pkgs
     
     # Agrupar por nombre

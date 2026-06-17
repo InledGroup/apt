@@ -40,9 +40,17 @@ jobs:
             .aptly
             public/rpm
             public/arch
-          key: ${{ runner.os }}-repo-${{ github.run_id }}
+          key: ${{ runner.os }}-aptly-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-repo-
+            ${{ runner.os }}-aptly-
+
+      - name: Sync existing packages from Release
+        run: |
+          mkdir -p public/rpm public/arch
+          gh release download packages --pattern "*.rpm" --dir public/rpm --repo ${{ github.repository }} --clobber || echo "No RPMs found in release"
+          gh release download packages --pattern "*.pkg.tar.*" --dir public/arch --repo ${{ github.repository }} --clobber || echo "No Arch packages found in release"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Import GPG Key
         run: |

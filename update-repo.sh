@@ -9,6 +9,8 @@ GPG_KEY_ID="repo@inled.es"
 
 # Asegurar directorios
 mkdir -p .aptly public
+echo "Contenido de public tras restaurar caché:"
+ls -R public 2>/dev/null || echo "public está vacío"
 
 # Inicializar repositorio si no existe
 if ! aptly -config=aptly.conf repo show "$REPO_NAME" > /dev/null 2>&1; then
@@ -70,10 +72,6 @@ if [ -d "skills" ]; then
     cp -r skills/* public/skills/
 fi
 
-# Generar listado de directorios para que sea navegable como un repo Debian
-echo "Generando índices de directorios..."
-python3 generate-indexes.py public
-
 # Actualizar repositorio RPM si existe el script
 if [ -f "./update-rpm-repo.sh" ]; then
     bash ./update-rpm-repo.sh
@@ -83,6 +81,10 @@ fi
 if [ -f "./update-pacman-repo.sh" ]; then
     bash ./update-pacman-repo.sh
 fi
+
+# Generar listado de directorios para que sea navegable (ahora que todos los repos están listos)
+echo "Generando índices de directorios..."
+python3 generate-indexes.py public
 
 # Generar index.html dinámico al final para incluir todos los paquetes actualizados
 if [ -f "index.html.template" ]; then

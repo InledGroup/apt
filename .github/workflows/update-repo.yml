@@ -44,11 +44,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-aptly-
 
-      - name: Sync existing packages from Release
+      - name: Sync and Reconstruct Repositories
         run: |
-          mkdir -p public/rpm public/arch
-          gh release download packages --pattern "*.rpm" --dir public/rpm --repo ${{ github.repository }} --clobber || echo "No RPMs found in release"
-          gh release download packages --pattern "*.pkg.tar.*" --dir public/arch --repo ${{ github.repository }} --clobber || echo "No Arch packages found in release"
+          mkdir -p incoming public/rpm public/arch
+          echo "Reconstruyendo repositorios desde GitHub Releases..."
+          # Descargar DEBs antiguos para restaurar Aptly si es necesario
+          gh release download packages --pattern "*.deb" --dir incoming --repo ${{ github.repository }} --clobber || echo "No se encontraron DEBs"
+          # Descargar RPMs y Arch para mantener la persistencia
+          gh release download packages --pattern "*.rpm" --dir public/rpm --repo ${{ github.repository }} --clobber || echo "No se encontraron RPMs"
+          gh release download packages --pattern "*.pkg.tar.*" --dir public/arch --repo ${{ github.repository }} --clobber || echo "No se encontraron paquetes Arch"
+          # Descargar metadatos JSON si existen
+          gh release download packages --pattern "packages.json" --dir . --repo ${{ github.repository }} --clobber || echo "No hay packages.json previo"
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -85,7 +91,7 @@ jobs:
           wget -q "$URL" -O "incoming/$FILENAME"
 
       - name: Upload to GitHub Release
-        if: (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') && steps.download.conclusion == 'success'
+        if: always()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: packages
@@ -93,6 +99,10 @@ jobs:
             incoming/*.deb
             incoming/*.rpm
             incoming/*.pkg.tar.*
+            public/rpm/*.rpm
+            public/arch/*.pkg.tar.*
+            packages.json
+          overwrite: true
 
       - name: Update repository
         run: |

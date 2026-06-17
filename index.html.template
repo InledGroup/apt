@@ -220,16 +220,18 @@ EOF
 sudo dnf install &lt;paquete&gt;</code></pre>
 
             <h3>Arch Linux (Pacman)</h3>
-            <pre><code># Añadir al final de /etc/pacman.conf
+            <pre><code># 1. Añadir al final de /etc/pacman.conf
 [inled]
 SigLevel = Required DatabaseOptional
 Server = https://apt.inled.es/arch/
 
-# Importar llave GPG
-sudo pacman-key --recv-keys <KEY_ID>
+# 2. Descargar e importar la llave GPG
+wget https://apt.inled.es/archive.key
+sudo pacman-key --add archive.key
 sudo pacman-key --lsign-key <KEY_ID>
+rm archive.key
 
-# Actualizar e instalar
+# 3. Actualizar e instalar
 sudo pacman -Sy</code></pre>
         </section>
 

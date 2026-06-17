@@ -108,6 +108,9 @@
         }
         .package-footer {
             margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .btn-sm {
             padding: 6px 12px;
@@ -115,8 +118,18 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            width: fit-content;
+            width: auto;
+            flex: 1 1 auto;
+            justify-content: center;
+            min-width: 80px;
         }
+
+        .btn-deb { background: #d70a53; } /* Debian Red */
+        .btn-rpm { background: #3c6eb4; } /* Fedora Blue */
+        .btn-arch { background: #1793d1; } /* Arch Blue */
+        .btn-deb:hover { background: #a50740; }
+        .btn-rpm:hover { background: #2e558a; }
+        .btn-arch:hover { background: #1275a7; }
 
         .btn {
             display: inline-block;
@@ -129,6 +142,7 @@
             transition: background 0.2s;
             border: none;
             cursor: pointer;
+            text-align: center;
         }
         .btn:hover { background: var(--primary-hover); }
         
@@ -152,6 +166,7 @@
         @media (max-width: 600px) {
             .container { margin: 20px auto; }
             h1 { font-size: 1.8rem; }
+            .package-list { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -203,6 +218,19 @@ EOF
 
 # Instalar paquetes
 sudo dnf install &lt;paquete&gt;</code></pre>
+
+            <h3>Arch Linux (Pacman)</h3>
+            <pre><code># Añadir al final de /etc/pacman.conf
+[inled]
+SigLevel = Required DatabaseOptional
+Server = https://apt.inled.es/arch/
+
+# Importar llave GPG
+sudo pacman-key --recv-keys <KEY_ID>
+sudo pacman-key --lsign-key <KEY_ID>
+
+# Actualizar e instalar
+sudo pacman -Sy</code></pre>
         </section>
 
         <section class="card" style="text-align: center; background: linear-gradient(135deg, #0052cc 0%, #002e73 100%); color: white;">

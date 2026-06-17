@@ -64,58 +64,6 @@ fi
 # Exportar la llave pública
 gpg --armor --export "$GPG_KEY_ID" > public/archive.key
 
-# Copiar el index.html si existe la plantilla
-if [ -f "index.html.template" ]; then
-    echo "Generando index.html dinámico..."
-    
-    # Obtener lista de paquetes de forma fiable
-    rm -f packages_html_temp.txt
-    
-    # Extraemos los paquetes directamente de la descripción del repo
-    # Formato esperado:   paquete_versión_arquitectura
-    # Usamos awk para quedarnos solo con la versión más reciente de cada paquete
-    aptly -config=aptly.conf repo show -with-packages "$REPO_NAME" | sed -n '/Packages:/,$p' | grep -v "Packages:" | sed 's/^  *//' | sort -V -r | awk -F_ '!seen[$1]++' | sort | while read -r line; do
-        if [ -z "$line" ]; then continue; fi
-        
-        PKG_NAME=$(echo "$line" | cut -d'_' -f1)
-        PKG_VER=$(echo "$line" | cut -d'_' -f2)
-        PKG_ARCH=$(echo "$line" | cut -d'_' -f3)
-        
-        echo "Procesando para web: $PKG_NAME ($PKG_VER)"
-        
-        DESC="Paquete para $PKG_NAME"
-        if [ "$PKG_NAME" == "appinstall" ]; then DESC="Gestor de aplicaciones multiplataforma"; fi
-        if [ "$PKG_NAME" == "seafari" ]; then DESC="Navegador web optimizado"; fi
-        
-        DEB_FILE="${PKG_NAME}_${PKG_VER}_${PKG_ARCH}.deb"
-        DOWNLOAD_URL="${RELEASE_URL}/${DEB_FILE}"
-        
-        # Construir el HTML de la card
-        ITEM_HTML="<li class=\"package-item\">"
-        ITEM_HTML+="<div class=\"package-header\">"
-        ITEM_HTML+="<span class=\"package-name\">$PKG_NAME</span>"
-        ITEM_HTML+="<span class=\"package-version\">v$PKG_VER</span>"
-        ITEM_HTML+="</div>"
-        ITEM_HTML+="<p class=\"package-desc\">$DESC</p>"
-        ITEM_HTML+="<div class=\"package-footer\">"
-        ITEM_HTML+="<a href=\"$DOWNLOAD_URL\" class=\"btn btn-sm\">⬇️ Descargar .deb</a>"
-        ITEM_HTML+="</div>"
-        ITEM_HTML+="</li>"
-        
-        echo "$ITEM_HTML" >> packages_html_temp.txt
-    done
-
-    if [ -s "packages_html_temp.txt" ]; then
-        # Usar un archivo temporal para la sustitución para evitar problemas con sed
-        sed -e '/<!-- PACKAGES_LIST_PLACEHOLDER -->/r packages_html_temp.txt' -e '/<!-- PACKAGES_LIST_PLACEHOLDER -->/d' index.html.template > public/index.html
-        rm packages_html_temp.txt
-    else
-        echo "Aviso: No se encontraron paquetes para listar en la web."
-        EMPTY_MSG="<p style=\"grid-column: 1/-1; text-align: center; color: var(--text-muted);\">No hay paquetes disponibles en este momento.</p>"
-        sed "s|<!-- PACKAGES_LIST_PLACEHOLDER -->|$EMPTY_MSG|g" index.html.template > public/index.html
-    fi
-fi
-
 # Asegurar carpeta de skills y copiar contenido si existe en la raíz
 mkdir -p public/skills
 if [ -d "skills" ]; then
@@ -131,6 +79,17 @@ if [ -f "./update-rpm-repo.sh" ]; then
     bash ./update-rpm-repo.sh
 fi
 
+# Actualizar repositorio Arch si existe el script
+if [ -f "./update-pacman-repo.sh" ]; then
+    bash ./update-pacman-repo.sh
+fi
+
+# Generar index.html dinámico al final para incluir todos los paquetes actualizados
+if [ -f "index.html.template" ]; then
+    echo "Generando index.html dinámico..."
+    python3 generate-web-index.py "$RELEASE_URL"
+fi
+
 # Crear archivo _headers para Cloudflare Pages
 echo "Creando archivo _headers para Cloudflare Pages..."
 cat <<EOF > public/_headers
@@ -141,6 +100,10 @@ cat <<EOF > public/_headers
   Content-Type: text/plain; charset=utf-8
 /pool/*
   Content-Type: application/vnd.debian.binary-package
+/rpm/*
+  Content-Type: application/x-rpm
+/arch/*
+  Content-Type: application/octet-stream
 /skills/*.md
   Content-Type: text/markdown; charset=utf-8
 EOF

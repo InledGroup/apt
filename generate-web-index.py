@@ -93,28 +93,35 @@ def generate_html(release_url):
     all_pkgs = apt_pkgs + rpm_pkgs + arch_pkgs
     
     # Agrupar por nombre
-    grouped = {}
+    by_name = {}
     for pkg in all_pkgs:
         name = pkg["name"]
-        if name not in grouped:
-            grouped[name] = {"versions": {}}
-        
-        version = pkg["version"]
-        if version not in grouped[name]["versions"]:
-            grouped[name]["versions"][version] = []
-        
-        grouped[name]["versions"][version].append(pkg)
+        if name not in by_name:
+            by_name[name] = []
+        by_name[name].append(pkg)
     
     packages_html = ""
     
-    if not grouped:
+    if not by_name:
         packages_html = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No hay paquetes disponibles en este momento.</p>'
     else:
-        for name in sorted(grouped.keys()):
-            # Usar la versión más reciente (simplificado)
-            versions = sorted(grouped[name]["versions"].keys(), reverse=True)
-            latest_ver = versions[0]
-            pkgs = grouped[name]["versions"][latest_ver]
+        for name in sorted(by_name.keys()):
+            pkgs_for_name = by_name[name]
+            
+            # Encontrar la versión más reciente entre todos los formatos para el título
+            all_versions = sorted(list(set(p["version"] for p in pkgs_for_name)), reverse=True)
+            latest_overall_ver = all_versions[0]
+            
+            # Para cada tipo, encontrar su versión más reciente
+            buttons_pkgs = []
+            for p_type in ["deb", "rpm", "arch"]:
+                type_pkgs = [p for p in pkgs_for_name if p["type"] == p_type]
+                if type_pkgs:
+                    # Encontrar la versión más reciente de ESTE tipo
+                    type_versions = sorted(list(set(p["version"] for p in type_pkgs)), reverse=True)
+                    latest_type_ver = type_versions[0]
+                    # Añadir todos los paquetes (distintas arquitecturas) de esa versión
+                    buttons_pkgs.extend([p for p in type_pkgs if p["version"] == latest_type_ver])
             
             desc = f"Paquete para {name}"
             if name == "appinstall": desc = "Gestor de aplicaciones multiplataforma"
@@ -123,29 +130,26 @@ def generate_html(release_url):
             item_html = f'<li class="package-item">'
             item_html += f'<div class="package-header">'
             item_html += f'<span class="package-name">{name}</span>'
-            item_html += f'<span class="package-version">v{latest_ver}</span>'
+            item_html += f'<span class="package-version">v{latest_overall_ver}</span>'
             item_html += f'</div>'
             item_html += f'<p class="package-desc">{desc}</p>'
             item_html += f'<div class="package-footer">'
             
-            # Botones para cada tipo disponible
-            for pkg in sorted(pkgs, key=lambda x: (x["type"], x["arch"])):
-                label = ""
-                css_class = ""
-                arch_label = f' ({pkg["arch"]})' if pkg["arch"] != "unknown" else ""
+            # Ordenar botones por tipo y arquitectura
+            for pkg in sorted(buttons_pkgs, key=lambda x: (x["type"], x["arch"])):
+                label = pkg["type"]
+                css_class = f"btn-{pkg['type']}"
                 
-                if pkg["type"] == "deb":
-                    label = f"deb{arch_label}"
-                    css_class = "btn-deb"
-                elif pkg["type"] == "rpm":
-                    label = f"rpm{arch_label}"
-                    css_class = "btn-rpm"
-                elif pkg["type"] == "arch":
-                    label = f"arch{arch_label}"
-                    css_class = "btn-arch"
+                # Añadir arquitectura si no es 'all' o 'any' o si hay varias
+                arch_info = f' ({pkg["arch"]})' if pkg["arch"] not in ["unknown"] else ""
+                
+                # Si la versión de este paquete es distinta a la general, indicarlo
+                ver_info = f' v{pkg["version"]}' if pkg["version"] != latest_overall_ver else ""
+                
+                full_label = f"{label}{arch_info}{ver_info}"
                 
                 download_url = f"{release_url}/{pkg['file']}"
-                item_html += f'<a href="{download_url}" class="btn btn-sm {css_class}">⬇️ {label}</a>'
+                item_html += f'<a href="{download_url}" class="btn btn-sm {css_class}">⬇️ {full_label}</a>'
             
             item_html += f'</div></li>'
             packages_html += item_html

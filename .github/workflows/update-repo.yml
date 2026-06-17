@@ -36,10 +36,13 @@ jobs:
       - name: Restore Aptly database
         uses: actions/cache@v4
         with:
-          path: .aptly
-          key: ${{ runner.os }}-aptly-${{ github.run_id }}
+          path: |
+            .aptly
+            public/rpm
+            public/arch
+          key: ${{ runner.os }}-repo-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-aptly-
+            ${{ runner.os }}-repo-
 
       - name: Import GPG Key
         run: |

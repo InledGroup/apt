@@ -32,6 +32,9 @@ echo "Actualizando base de datos con repo-add..."
 # Archivos de base de datos
 DB_FILE="$ARCH_DIR/$REPO_NAME.db.tar.gz"
 
+# Recopilar todos los paquetes válidos para procesarlos de una vez
+PKGS_TO_ADD=()
+
 for pkg in "$ARCH_DIR"/*.pkg.tar.*; do
     # No procesar firmas como paquetes
     if [[ "$pkg" == *.sig ]]; then continue; fi
@@ -44,9 +47,17 @@ for pkg in "$ARCH_DIR"/*.pkg.tar.*; do
         gpg --batch --yes --detach-sign --default-key "$GPG_KEY_ID" "$pkg"
     fi
     
-    # Añadir a la base de datos
-    # --sign firma la base de datos resultante
-    repo-add --sign --key "$GPG_KEY_ID" "$DB_FILE" "$pkg"
+    PKGS_TO_ADD+=("$pkg")
 done
+
+if [ ${#PKGS_TO_ADD[@]} -eq 0 ]; then
+    echo "No hay nuevos paquetes válidos para añadir."
+    exit 0
+fi
+
+# Añadir a la base de datos (procesar todos a la vez es más eficiente)
+# -n (new) solo añade paquetes que no están, -f (force) sobreescribe
+echo "Ejecutando repo-add para ${#PKGS_TO_ADD[@]} paquetes..."
+repo-add --sign --key "$GPG_KEY_ID" "$DB_FILE" "${PKGS_TO_ADD[@]}"
 
 echo "Repositorio Arch Linux actualizado con éxito en '$ARCH_DIR/'"

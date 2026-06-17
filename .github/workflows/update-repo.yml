@@ -80,15 +80,23 @@ jobs:
         run: |
           mkdir -p incoming
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
-            URL="${{ github.event.client_payload.package_url || github.event.client_payload.deb_url }}"
+            # Procesar múltiples URLs si existen
+            PAYLOAD='${{ toJson(github.event.client_payload) }}'
+            echo "Procesando payload de dispatch..."
+            echo "$PAYLOAD" | jq -r 'to_entries[] | select(.key | endswith("_url")) | .value' | while read -r URL; do
+              if [ -n "$URL" ] && [ "$URL" != "null" ]; then
+                FILENAME=$(basename "$URL")
+                echo "Descargando $URL..."
+                wget -q "$URL" -O "incoming/$FILENAME"
+              fi
+            done
           else
             URL="${{ github.event.inputs.package_url }}"
+            URL=$(echo "$URL" | xargs)
+            FILENAME=$(basename "$URL")
+            echo "Descargando $URL..."
+            wget -q "$URL" -O "incoming/$FILENAME"
           fi
-          # Eliminar espacios en blanco accidentales
-          URL=$(echo "$URL" | xargs)
-          FILENAME=$(basename "$URL")
-          echo "Descargando $URL..."
-          wget -q "$URL" -O "incoming/$FILENAME"
 
       - name: Upload to GitHub Release
         if: always()

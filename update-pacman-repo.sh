@@ -30,7 +30,10 @@ echo "Actualizando base de datos con repo-add..."
 # repo-add [opciones] <ruta-a-la-db> <ruta-al-paquete>
 
 # Archivos de base de datos
-DB_FILE="$ARCH_DIR/$REPO_NAME.db.tar.gz"
+# Usamos .db directamente en lugar de .db.tar.gz para evitar que repo-add cree enlaces simbólicos,
+# ya que algunos servicios de hosting (como Cloudflare Pages) no los manejan bien.
+DB_FILE="$ARCH_DIR/$REPO_NAME.db"
+FILES_FILE="$ARCH_DIR/$REPO_NAME.files"
 
 # Recopilar todos los paquetes válidos para procesarlos de una vez
 PKGS_TO_ADD=()

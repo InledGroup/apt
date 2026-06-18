@@ -19,7 +19,7 @@ Trigger the central repository update using a `repository_dispatch` event.
   run: |
     curl -X POST -H "Accept: application/vnd.github.v3+json" \
          -H "Authorization: token ${{ secrets.INLED_REPO_PAT }}" \
-         https://api.github.com/repos/inled-group/aptrepo/dispatches \
+         https://api.github.com/repos/InledGroup/apt/dispatches \
          -d '{"event_type": "package_upload", "client_payload": {"package_url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/your-app.deb"}}'
 ```
 *Note: `INLED_REPO_PAT` must be a Personal Access Token with write access to the central `aptrepo` repository.*
@@ -48,6 +48,26 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://apt.inled.es/archive.key
 EOF
+```
+
+### Pacman Integration (Arch Linux / PearOS)
+Include these commands to trust the repository key:
+
+```bash
+# Import and trust the key
+curl -s https://apt.inled.es/archive.key | sudo pacman-key -a -
+sudo pacman-key --lsign-key EB2D78F1CBA07666726817967EDDC83147A77DD4
+
+# Add the repository to /etc/pacman.conf
+sudo tee -a /etc/pacman.conf <<EOF
+
+[inled]
+SigLevel = Required DatabaseOptional
+Server = https://apt.inled.es/arch/
+EOF
+
+# Update databases
+sudo pacman -Sy
 ```
 
 ## 3. Maintaining the Central Repository

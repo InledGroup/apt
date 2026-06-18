@@ -133,7 +133,7 @@ def generate_html(release_url):
     with open("index.html.template", "r") as f:
         template = f.read()
     
-    final_html = template.replace("<!-- PACKAGES_LIST_PLACEHOLDER -->", packages_html).replace("<KEY_ID>", "repo@inled.es")
+    final_html = template.replace("<!-- PACKAGES_LIST_PLACEHOLDER -->", packages_html).replace("<KEY_ID>", "EB2D78F1CBA07666726817967EDDC83147A77DD4")
     with open("public/index.html", "w") as f:
         f.write(final_html)
 

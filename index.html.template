@@ -222,17 +222,20 @@ sudo dnf install &lt;paquete&gt;</code></pre>
             <h3>Arch Linux (Pacman)</h3>
             <pre><code># 1. Añadir al final de /etc/pacman.conf
 [inled]
-SigLevel = Required DatabaseOptional
+SigLevel = PackageRequired
 Server = https://apt.inled.es/arch/
 
-# 2. Descargar e importar la llave GPG
-wget https://apt.inled.es/archive.key
-sudo pacman-key --add archive.key
-sudo pacman-key --lsign-key <KEY_ID>
-rm archive.key
+# 2. Importar y confiar en la llave GPG
+sudo pacman-key --recv-keys EB2D78F1CBA07666726817967EDDC83147A77DD4
+sudo pacman-key --lsign-key EB2D78F1CBA07666726817967EDDC83147A77DD4
 
 # 3. Actualizar e instalar
 sudo pacman -Sy</code></pre>
+
+            <div class="alert alert-info">
+                <strong>¿La llave desaparece al reiniciar?</strong><br>
+                Si usas una versión de PearOS o Arch con sistema de archivos efímero, puedes usar <code>SigLevel = Optional TrustAll</code> en el paso 1 para evitar tener que importar la llave en cada arranque (menos seguro, pero funcional).
+            </div>
         </section>
 
         <section class="card" style="text-align: center; background: linear-gradient(135deg, #0052cc 0%, #002e73 100%); color: white;">

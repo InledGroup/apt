@@ -30,10 +30,10 @@ echo "Actualizando base de datos con repo-add..."
 # repo-add [opciones] <ruta-a-la-db> <ruta-al-paquete>
 
 # Archivos de base de datos
-# Usamos .db directamente en lugar de .db.tar.gz para evitar que repo-add cree enlaces simbólicos,
-# ya que algunos servicios de hosting (como Cloudflare Pages) no los manejan bien.
-DB_FILE="$ARCH_DIR/$REPO_NAME.db"
-FILES_FILE="$ARCH_DIR/$REPO_NAME.files"
+# Usamos .db.tar.gz porque repo-add lo requiere estrictamente.
+# Luego convertiremos los enlaces simbólicos en archivos reales para Cloudflare Pages.
+DB_FILE="$ARCH_DIR/$REPO_NAME.db.tar.gz"
+FILES_FILE="$ARCH_DIR/$REPO_NAME.files.tar.gz"
 
 # Recopilar todos los paquetes válidos para procesarlos de una vez
 PKGS_TO_ADD=()
@@ -62,5 +62,18 @@ fi
 # -n (new) solo añade paquetes que no están, -f (force) sobreescribe
 echo "Ejecutando repo-add para ${#PKGS_TO_ADD[@]} paquetes..."
 repo-add --sign --key "$GPG_KEY_ID" "$DB_FILE" "${PKGS_TO_ADD[@]}"
+
+# Solución para Cloudflare Pages: reemplazar enlaces simbólicos por archivos reales
+# repo-add crea enlaces simbólicos (ej: inled.db -> inled.db.tar.gz)
+# Cloudflare los sirve como texto, lo que rompe pacman.
+echo "Corrigiendo enlaces simbólicos para Cloudflare Pages..."
+for file in "$ARCH_DIR/$REPO_NAME.db" "$ARCH_DIR/$REPO_NAME.files" "$ARCH_DIR/$REPO_NAME.db.sig" "$ARCH_DIR/$REPO_NAME.files.sig"; do
+    if [ -L "$file" ]; then
+        target=$(readlink -f "$file")
+        echo "Convirtiendo enlace simbólico en archivo real: $file -> $target"
+        rm "$file"
+        cp "$target" "$file"
+    fi
+done
 
 echo "Repositorio Arch Linux actualizado con éxito en '$ARCH_DIR/'"

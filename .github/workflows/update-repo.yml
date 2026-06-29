@@ -80,10 +80,25 @@ jobs:
         run: |
           mkdir -p incoming
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
-            # Procesar múltiples URLs si existen
+            # Procesar múltiples URLs si existen / Process multiple URLs if they exist
             PAYLOAD='${{ toJson(github.event.client_payload) }}'
             echo "Procesando payload de dispatch..."
-            echo "$PAYLOAD" | jq -r 'to_entries[] | select(.key | endswith("_url")) | .value' | while read -r URL; do
+            
+            # 1. Procesar package_urls (múltiples URLs separadas por espacio/nueva línea) si existe
+            URLS_LIST=$(echo "$PAYLOAD" | jq -r '.package_urls // empty')
+            if [ -n "$URLS_LIST" ] && [ "$URLS_LIST" != "null" ]; then
+              echo "Detectada lista consolidada de URLs..."
+              echo "$URLS_LIST" | tr -s '[[:space:]]' '\n' | while read -r URL; do
+                if [ -n "$URL" ]; then
+                  FILENAME=$(basename "$URL")
+                  echo "Descargando $URL..."
+                  wget -q "$URL" -O "incoming/$FILENAME"
+                fi
+              done
+            fi
+            
+            # 2. Procesar propiedades individuales que terminen en _url (compatibilidad hacia atrás)
+            echo "$PAYLOAD" | jq -r 'to_entries[] | select(.key | endswith("_url") and .key != "package_urls") | .value' | while read -r URL; do
               if [ -n "$URL" ] && [ "$URL" != "null" ]; then
                 FILENAME=$(basename "$URL")
                 echo "Descargando $URL..."

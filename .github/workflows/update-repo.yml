@@ -118,8 +118,19 @@ jobs:
             wget -q "$URL" -O "incoming/$FILENAME"
           fi
 
+      - name: Update repository
+        # English: Run the repository update script (updates aptly, rpm, arch and web indexes)
+        # Español: Ejecutar el script de actualización del repositorio (actualiza aptly, rpm, arch e índices web)
+        run: |
+          RELEASE_TAG="packages"
+          export RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}"
+          ./update-repo.sh
+        env:
+          RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/packages
+
       - name: Upload to GitHub Release
-        if: always()
+        # English: Upload packages and metadata to GitHub Release. Runs only if repository update succeeds.
+        # Español: Subir paquetes y metadatos a GitHub Release. Se ejecuta sólo si la actualización del repositorio es exitosa.
         uses: softprops/action-gh-release@v2
         with:
           tag_name: packages
@@ -127,21 +138,12 @@ jobs:
             incoming/*.deb
             incoming/*.rpm
             incoming/*.pkg.tar.*
-            public/rpm/*.rpm
-            public/arch/*.pkg.tar.*
             packages.json
           overwrite: true
 
-      - name: Update repository
-        run: |
-          # Extraer versión del paquete para la release (opcional, usamos 'latest' por simplicidad)
-          RELEASE_TAG="packages"
-          export RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}"
-          ./update-repo.sh
-        env:
-          RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/packages
-
       - name: Deploy to Cloudflare Pages
+        # English: Deploy web UI and redirects to Cloudflare Pages
+        # Español: Desplegar la interfaz web y las redirecciones a Cloudflare Pages
         run: npx wrangler pages deploy public --project-name inled-apt --branch main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

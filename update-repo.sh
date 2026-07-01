@@ -20,8 +20,12 @@ fi
 if [ -d "incoming" ] && [ "$(ls -A incoming/*.deb 2>/dev/null)" ]; then
     echo "Sincronizando paquetes con el repositorio APT..."
     # Usamos -force-replace para asegurar que la base de datos local coincide con los archivos físicos
+    # English: Add packages to the aptly repository database.
+    # Español: Añadir paquetes a la base de datos del repositorio de aptly.
     aptly -config=aptly.conf repo add -force-replace "$REPO_NAME" incoming/
-    rm -rf incoming/*.deb
+    
+    # English: We do NOT remove the debs from incoming/ here because they need to be uploaded to GitHub Releases in a later step.
+    # Español: NO eliminamos los debs de incoming/ aquí porque deben ser subidos a GitHub Releases en un paso posterior.
 fi
 
 # Publicar el repositorio (o actualizar la publicación)

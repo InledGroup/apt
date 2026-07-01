@@ -56,6 +56,19 @@ def get_arch_packages(arch_dir):
                 packages.append({"name": f.split("-")[0], "version": "unknown", "arch": "unknown", "type": "arch", "file": f})
     return packages
 
+def version_key(version_str):
+    """
+    Convierte una cadena de versión (ej: "1.0.17", "14.2-1") en una tupla de enteros
+    para permitir una ordenación numérica semántica en lugar de lexicográfica.
+    Converts a version string into a tuple of integers for correct semantic sorting.
+    """
+    try:
+        cleaned = re.sub(r'[^\d.]', '.', version_str)
+        parts = [int(x) for x in cleaned.split('.') if x]
+        return tuple(parts) if parts else (0,)
+    except:
+        return (0,)
+
 def generate_html(release_url):
     # 1. Escanear estado actual
     apt_pkgs = get_apt_packages("inled-repo")
@@ -98,7 +111,8 @@ def generate_html(release_url):
         packages_html = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No hay paquetes disponibles.</p>'
     else:
         for name in sorted(history.keys()):
-            versions = sorted(history[name]["versions"].keys(), reverse=True)
+            # Ordenar versiones semánticamente
+            versions = sorted(history[name]["versions"].keys(), key=version_key, reverse=True)
             latest_overall_ver = versions[0]
             
             # Recopilar botones de las últimas versiones de cada tipo
@@ -111,7 +125,7 @@ def generate_html(release_url):
                         type_versions.append(v)
                 
                 if type_versions:
-                    latest_type_ver = sorted(type_versions, reverse=True)[0]
+                    latest_type_ver = sorted(type_versions, key=version_key, reverse=True)[0]
                     buttons_pkgs.extend([p for p in history[name]["versions"][latest_type_ver] if p["type"] == p_type])
             
             desc = "Gestor de aplicaciones multiplataforma" if name == "appinstall" else "Navegador web optimizado" if name == "seafari" else f"Paquete para {name}"

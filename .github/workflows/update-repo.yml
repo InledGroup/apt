@@ -2,15 +2,15 @@ name: Update Repositories
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   repository_dispatch:
     types: [package_upload]
   workflow_dispatch:
     inputs:
       package_url:
-        description: 'URL of the .deb or .rpm package to add'
+        description: "URL of the .deb or .rpm package to add"
         required: false
 
 permissions:
@@ -48,12 +48,7 @@ jobs:
         run: |
           mkdir -p incoming public/rpm public/arch
           echo "Reconstruyendo repositorios desde GitHub Releases..."
-          # Descargar DEBs antiguos para restaurar Aptly si es necesario
-          gh release download packages --pattern "*.deb" --dir incoming --repo ${{ github.repository }} --clobber || echo "No se encontraron DEBs"
-          # Descargar RPMs y Arch para mantener la persistencia
-          gh release download packages --pattern "*.rpm" --dir public/rpm --repo ${{ github.repository }} --clobber || echo "No se encontraron RPMs"
-          gh release download packages --pattern "*.pkg.tar.*" --dir public/arch --repo ${{ github.repository }} --clobber || echo "No se encontraron paquetes Arch"
-          # Descargar metadatos JSON si existen
+          # Only download metadata if needed - don't download all old versions
           gh release download packages --pattern "packages.json" --dir . --repo ${{ github.repository }} --clobber || echo "No hay packages.json previo"
         env:
           GH_TOKEN: ${{ github.token }}
@@ -84,11 +79,11 @@ jobs:
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
             # Procesar múltiples URLs si existen / Process multiple URLs if they exist
             echo "Procesando payload de dispatch..."
-            
+
             # Asegurar que el payload sea un objeto JSON (si es string, parsearlo con fromjson)
             # Ensure payload is a JSON object (if it's a string, parse it with fromjson)
             PAYLOAD_OBJ=$(echo "$CLIENT_PAYLOAD" | jq 'if type == "string" then fromjson else . end')
-            
+
             # 1. Procesar package_urls (múltiples URLs separadas por espacio/nueva línea) si existe
             URLS_LIST=$(echo "$PAYLOAD_OBJ" | jq -r '.package_urls // empty')
             if [ -n "$URLS_LIST" ] && [ "$URLS_LIST" != "null" ]; then
@@ -101,7 +96,7 @@ jobs:
                 fi
               done
             fi
-            
+
             # 2. Procesar propiedades individuales que terminen en _url (compatibilidad hacia atrás)
             echo "$PAYLOAD_OBJ" | jq -r 'to_entries[] | select(.key | endswith("_url")) | select(.key != "package_urls") | .value' | while read -r URL; do
               if [ -n "$URL" ] && [ "$URL" != "null" ]; then
@@ -127,6 +122,57 @@ jobs:
           ./update-repo.sh
         env:
           RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/packages
+
+      - name: Remove old package versions
+        # English: Delete old versions of packages before uploading new ones to avoid accumulation
+        # Español: Eliminar versiones antiguas de paquetes antes de subir los nuevos para evitar acumulación
+        run: |
+          TAG="packages"
+          RELEASE_EXISTS=$(gh release view "$TAG" --repo ${{ github.repository }} 2>/dev/null && echo "true" || echo "false")
+
+          if [ "$RELEASE_EXISTS" = "false" ]; then
+            echo "Release does not exist yet, skipping cleanup"
+            exit 0
+          fi
+
+          echo "Cleaning up old package versions..."
+
+          # Process each new package
+          for file in incoming/*.deb incoming/*.rpm incoming/*.pkg.tar.*; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+
+              # Extract base package name (remove version and architecture)
+              # Examples: pulsaros-theme_1.0.1_all.deb -> pulsaros-theme
+              #           pulsaros-1.0.1-1-x86_64.pkg.tar.zst -> pulsaros
+              if [[ "$filename" == *.deb ]]; then
+                package_base=$(echo "$filename" | sed 's/_[0-9][0-9.~+:-]*_.*//')
+              elif [[ "$filename" == *.rpm ]]; then
+                package_base=$(echo "$filename" | sed 's/-[0-9][0-9.~+:-]*.rpm$//')
+              elif [[ "$filename" == *.pkg.tar.* ]]; then
+                package_base=$(echo "$filename" | sed 's/-[0-9][0-9.~+:-]*-.*//')
+              else
+                continue
+              fi
+
+              echo "Processing new package: $filename (base: $package_base)"
+
+              # Get list of all assets with same base name and delete them
+              gh release view "$TAG" --json assets --jq '.assets[].name' --repo ${{ github.repository }} | while read asset; do
+                # Check if this is an old version of the package we're uploading
+                if [[ "$asset" == "${package_base}"_* ]] || [[ "$asset" == "${package_base}"-* ]]; then
+                  if [ "$asset" != "$filename" ]; then
+                    echo "  Deleting old version: $asset"
+                    gh release delete-asset "$TAG" "$asset" --repo ${{ github.repository }} --yes || true
+                    sleep 1
+                  fi
+                fi
+              done
+            fi
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+        continue-on-error: true
 
       - name: Upload to GitHub Release
         # English: Upload packages and metadata to GitHub Release. Runs only if repository update succeeds.

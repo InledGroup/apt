@@ -103,7 +103,7 @@ jobs:
             fi
             
             # 2. Procesar propiedades individuales que terminen en _url (compatibilidad hacia atrás)
-            echo "$PAYLOAD_OBJ" | jq -r 'to_entries[] | select(.key | endswith("_url") and .key != "package_urls") | .value' | while read -r URL; do
+            echo "$PAYLOAD_OBJ" | jq -r 'to_entries[] | select(.key | endswith("_url")) | select(.key != "package_urls") | .value' | while read -r URL; do
               if [ -n "$URL" ] && [ "$URL" != "null" ]; then
                 FILENAME=$(basename "$URL")
                 echo "Descargando $URL..."

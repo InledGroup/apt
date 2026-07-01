@@ -77,15 +77,20 @@ jobs:
       - name: Download package
         id: download
         if: github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_dispatch' && github.event.inputs.package_url != '')
+        env:
+          CLIENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |
           mkdir -p incoming
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
             # Procesar múltiples URLs si existen / Process multiple URLs if they exist
-            PAYLOAD='${{ toJson(github.event.client_payload) }}'
             echo "Procesando payload de dispatch..."
             
+            # Asegurar que el payload sea un objeto JSON (si es string, parsearlo con fromjson)
+            # Ensure payload is a JSON object (if it's a string, parse it with fromjson)
+            PAYLOAD_OBJ=$(echo "$CLIENT_PAYLOAD" | jq 'if type == "string" then fromjson else . end')
+            
             # 1. Procesar package_urls (múltiples URLs separadas por espacio/nueva línea) si existe
-            URLS_LIST=$(echo "$PAYLOAD" | jq -r '.package_urls // empty')
+            URLS_LIST=$(echo "$PAYLOAD_OBJ" | jq -r '.package_urls // empty')
             if [ -n "$URLS_LIST" ] && [ "$URLS_LIST" != "null" ]; then
               echo "Detectada lista consolidada de URLs..."
               echo "$URLS_LIST" | tr -s '[[:space:]]' '\n' | while read -r URL; do
@@ -98,7 +103,7 @@ jobs:
             fi
             
             # 2. Procesar propiedades individuales que terminen en _url (compatibilidad hacia atrás)
-            echo "$PAYLOAD" | jq -r 'to_entries[] | select(.key | endswith("_url") and .key != "package_urls") | .value' | while read -r URL; do
+            echo "$PAYLOAD_OBJ" | jq -r 'to_entries[] | select(.key | endswith("_url") and .key != "package_urls") | .value' | while read -r URL; do
               if [ -n "$URL" ] && [ "$URL" != "null" ]; then
                 FILENAME=$(basename "$URL")
                 echo "Descargando $URL..."

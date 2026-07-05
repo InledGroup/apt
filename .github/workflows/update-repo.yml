@@ -12,6 +12,10 @@ on:
       package_url:
         description: "URL of the .deb or .rpm package to add"
         required: false
+      rebuild:
+        description: "Set to true to re-download and re-sign all packages"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -49,6 +53,18 @@ jobs:
           mkdir -p incoming public/rpm public/arch
           echo "Reconstructing repositories from GitHub Releases..."
           gh release download packages --pattern "packages.json" --dir . --repo ${{ github.repository }} --clobber || echo "No previous packages.json"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Rebuild all packages (on [REBUILD] commit)
+        if: |
+          contains(github.event.head_commit.message, '[REBUILD]') ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.rebuild == 'true')
+        run: |
+          echo "REBUILD flag detected: re-downloading all packages for re-signing..."
+          gh release download packages --dir incoming --repo ${{ github.repository }} --clobber || echo "No release yet"
+          mv incoming/packages.json . 2>/dev/null || true
+          echo "All packages downloaded. They will be re-signed in the next steps."
         env:
           GH_TOKEN: ${{ github.token }}
 

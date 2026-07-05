@@ -1,0 +1,11 @@
+{
+  "name": "inled-apt-repo",
+  "private": true,
+  "scripts": {
+    "dev": "python3 generate-web-index.py && serve public",
+    "build": "python3 generate-web-index.py"
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}

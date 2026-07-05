@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -43,7 +43,6 @@
         .card {
             background: var(--card-bg);
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             padding: 30px;
             margin-bottom: 30px;
             border: 1px solid var(--border);
@@ -77,10 +76,6 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: transform 0.2s;
-        }
-        .package-item:hover {
-            transform: translateY(-2px);
         }
         .package-header {
             margin-bottom: 10px;
@@ -124,9 +119,9 @@
             min-width: 80px;
         }
 
-        .btn-deb { background: #d70a53; } /* Debian Red */
-        .btn-rpm { background: #3c6eb4; } /* Fedora Blue */
-        .btn-arch { background: #1793d1; } /* Arch Blue */
+        .btn-deb { background: #d70a53; }
+        .btn-rpm { background: #3c6eb4; }
+        .btn-arch { background: #1793d1; }
         .btn-deb:hover { background: #a50740; }
         .btn-rpm:hover { background: #2e558a; }
         .btn-arch:hover { background: #1275a7; }
@@ -174,38 +169,29 @@
     <div class="container">
         <header>
             <img src="https://hosted.inled.es/inled-logo-full.png" alt="Inled Logo" class="logo">
-            <p class="description">Repositorio oficial de paquetes para las aplicaciones de Inled.</p>
+            <p class="description">Official package repository for Inled applications.</p>
         </header>
 
         <section class="card">
-            <h2>📦 Paquetes disponibles</h2>
-            <div id="packages-container">
-                <ul class="package-list">
-                    <!-- PACKAGES_LIST_PLACEHOLDER -->
-                </ul>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>🚀 Cómo usar este repositorio</h2>
+            <h2>How to use this repository</h2>
             
             <h3>Ubuntu / Debian (APT)</h3>
-            <pre><code># 1. Descargar la llave GPG
+            <pre><code># 1. Download the GPG key
 wget -qO- https://apt.inled.es/archive.key | gpg --dearmor | sudo tee /usr/share/keyrings/inled-archive-keyring.gpg > /dev/null
 
-# 2. Añadir el repositorio
+# 2. Add the repository
 echo "deb [signed-by=/usr/share/keyrings/inled-archive-keyring.gpg] https://apt.inled.es stable main" | sudo tee /etc/apt/sources.list.d/inled.list
 
-# 3. Actualizar e instalar
+# 3. Update and install
 sudo apt update</code></pre>
 
             <div class="alert alert-warning">
-                <strong>¿Problemas con apt update?</strong><br>
-                Si recibes errores de "malformed line" o "NOSPLIT", verifica que el archivo <code>/etc/apt/sources.list.d/inled.list</code> contenga una sola línea y que no termine en barra diagonal (/) después de <code>stable main</code>.
+                <strong>Issues with apt update?</strong><br>
+                If you get "malformed line" or "NOSPLIT" errors, verify that <code>/etc/apt/sources.list.d/inled.list</code> contains a single line and does not end with a trailing slash after <code>stable main</code>.
             </div>
 
             <h3>Fedora / RHEL / CentOS (DNF/YUM)</h3>
-            <pre><code># Crear el archivo de configuración
+            <pre><code># Create the config file
 sudo tee /etc/yum.repos.d/inled.repo <<EOF
 [inled]
 name=Inled Repository
@@ -216,36 +202,56 @@ repo_gpgcheck=1
 gpgkey=https://apt.inled.es/archive.key
 EOF
 
-# Instalar paquetes
-sudo dnf install &lt;paquete&gt;</code></pre>
+# Install packages
+sudo dnf install &lt;package&gt;</code></pre>
 
             <h3>Arch Linux (Pacman)</h3>
-            <pre><code># 1. Añadir al final de /etc/pacman.conf
+            <pre><code># 1. Add to the end of /etc/pacman.conf
 [inled]
 SigLevel = PackageRequired
 Server = https://apt.inled.es/arch/
 
-# 2. Importar y confiar en la llave GPG
+# 2. Import and sign the GPG key
 sudo pacman-key --recv-keys EB2D78F1CBA07666726817967EDDC83147A77DD4
 sudo pacman-key --lsign-key EB2D78F1CBA07666726817967EDDC83147A77DD4
 
-# 3. Actualizar e instalar
+# 3. Update and install
 sudo pacman -Sy</code></pre>
 
             <div class="alert alert-info">
-                <strong>¿La llave desaparece al reiniciar?</strong><br>
-                Si usas una versión de PearOS o Arch con sistema de archivos efímero, puedes usar <code>SigLevel = Optional TrustAll</code> en el paso 1 para evitar tener que importar la llave en cada arranque (menos seguro, pero funcional).
+                <strong>Key missing after reboot?</strong><br>
+                If you use PearOS or a version of Arch with an ephemeral filesystem, you can use <code>SigLevel = Optional TrustAll</code> in step 1 to avoid importing the key on every boot (less secure, but functional).
             </div>
         </section>
 
-        <section class="card" style="text-align: center; background: linear-gradient(135deg, #0052cc 0%, #002e73 100%); color: white;">
-            <h2 style="color: white; border-bottom-color: rgba(255,255,255,0.2);">🛠️ Zona Desarrolladores</h2>
-            <p>Aprende a integrar este repositorio en tus procesos de CI/CD y desplegar apps automáticamente.</p>
-            <a href="/skills/inled-repo-support.md" class="btn" style="background: white; color: var(--primary); margin-top: 10px;">Ver Skill para Gemini CLI</a>
+        <section class="card">
+            <h2>Available packages</h2>
+            <input type="text" id="search" placeholder="Search packages..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box;">
+            <div id="packages-container">
+                <ul class="package-list" id="package-list">
+                    <!-- PACKAGES_LIST_PLACEHOLDER -->
+                </ul>
+            </div>
+        </section>
+
+        <script>
+            document.getElementById('search').addEventListener('input', function() {
+                const q = this.value.toLowerCase();
+                document.querySelectorAll('.package-item').forEach(function(item) {
+                    const name = item.querySelector('.package-name').textContent.toLowerCase();
+                    item.style.display = name.includes(q) ? '' : 'none';
+                });
+            });
+        </script>
+
+        <section class="card">
+            <h2>Developers</h2>
+            <p>Learn how to integrate this repository into your CI/CD pipeline and deploy apps automatically.</p>
+            <a href="/skills/inled-repo-support.md" class="btn">Gemini CLI Skill</a>
         </section>
 
         <footer>
-            &copy; 2026 Inled Group. Servido vía Cloudflare Pages.
+            &copy; 2026 Inled Group. Served via Cloudflare Pages.
         </footer>
     </div>
 </body>

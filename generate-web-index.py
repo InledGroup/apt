@@ -58,9 +58,8 @@ def get_arch_packages(arch_dir):
 
 def version_key(version_str):
     """
-    Convierte una cadena de versión (ej: "1.0.17", "14.2-1") en una tupla de enteros
-    para permitir una ordenación numérica semántica en lugar de lexicográfica.
-    Converts a version string into a tuple of integers for correct semantic sorting.
+    Converts a version string (e.g. "1.0.17", "14.2-1") into a tuple of integers
+    for correct semantic version sorting.
     """
     try:
         cleaned = re.sub(r'[^\d.]', '.', version_str)
@@ -76,7 +75,7 @@ def generate_html(release_url):
     arch_pkgs = get_arch_packages("public/arch")
     current_pkgs = apt_pkgs + rpm_pkgs + arch_pkgs
     
-    print(f"Escaneo: APT({len(apt_pkgs)}), RPM({len(rpm_pkgs)}), Arch({len(arch_pkgs)})")
+    print(f"Scan: APT({len(apt_pkgs)}), RPM({len(rpm_pkgs)}), Arch({len(arch_pkgs)})")
 
     # 2. Cargar/Actualizar JSON (Persistencia de metadatos)
     db_file = "packages.json"
@@ -108,7 +107,7 @@ def generate_html(release_url):
     # 3. Generar HTML desde el Historial (para que no se olvide de nada)
     packages_html = ""
     if not history:
-        packages_html = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No hay paquetes disponibles.</p>'
+        packages_html = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No packages available.</p>'
     else:
         for name in sorted(history.keys()):
             # Ordenar versiones semánticamente
@@ -128,7 +127,7 @@ def generate_html(release_url):
                     latest_type_ver = sorted(type_versions, key=version_key, reverse=True)[0]
                     buttons_pkgs.extend([p for p in history[name]["versions"][latest_type_ver] if p["type"] == p_type])
             
-            desc = "Gestor de aplicaciones multiplataforma" if name == "appinstall" else "Navegador web optimizado" if name == "seafari" else f"Paquete para {name}"
+            desc = "Multi-platform application manager" if name == "appinstall" else "Optimized web browser" if name == "seafari" else f"Package for {name}"
             
             item_html = f'<li class="package-item">'
             item_html += f'<div class="package-header"><span class="package-name">{name}</span><span class="package-version">v{latest_overall_ver}</span></div>'
@@ -139,7 +138,7 @@ def generate_html(release_url):
                 arch_info = f' ({pkg["arch"]})' if pkg["arch"] != "unknown" else ""
                 ver_info = f' v{pkg["version"]}' if pkg["version"] != latest_overall_ver else ""
                 full_label = f"{pkg['type']}{arch_info}{ver_info}"
-                item_html += f'<a href="{release_url}/{pkg["file"]}" class="btn btn-sm btn-{pkg["type"]}">⬇️ {full_label}</a>'
+                item_html += f'<a href="{release_url}/{pkg["file"]}" class="btn btn-sm btn-{pkg["type"]}">{full_label}</a>'
             
             item_html += f'</div></li>'
             packages_html += item_html

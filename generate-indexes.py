@@ -3,7 +3,6 @@ import os
 import html
 from datetime import datetime
 
-# Estilo CSS para el listado de directorios
 CSS = """
 body { font-family: monospace; padding: 20px; }
 h1 { border-bottom: 1px solid #ccc; padding-bottom: 10px; }
@@ -15,10 +14,9 @@ tr:hover { background-color: #f5f5f5; }
 
 def generate_index(path, relative_url):
     items = sorted(os.listdir(path))
-    
-    # Filtrar archivos ocultos e index.html
+
     items = [i for i in items if not i.startswith('.') and i != 'index.html']
-    
+
     html_content = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -38,48 +36,50 @@ def generate_index(path, relative_url):
         </thead>
         <tbody>
 """
-    
+
     for item in items:
         full_path = os.path.join(path, item)
         is_dir = os.path.isdir(full_path)
         display_name = item + ('/' if is_dir else '')
-        
+
         stat = os.stat(full_path)
         last_mod = datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
         size = f"{stat.st_size:,} B" if not is_dir else "-"
-        
+
         html_content += f"""
             <tr>
                 <td><a href="{item}{'/' if is_dir else ''}">{display_name}</a></td>
                 <td>{last_mod}</td>
                 <td>{size}</td>
             </tr>"""
-            
+
     html_content += """
         </tbody>
     </table>
 </body>
 </html>
 """
-    with open(os.path.join(path, "index.html"), "w") as f:
+    tmp_path = os.path.join(path, "index.html.tmp")
+    final_path = os.path.join(path, "index.html")
+    with open(tmp_path, "w") as f:
         f.write(html_content)
+    os.replace(tmp_path, final_path)
 
 def walk_and_index(base_dir):
     for root, dirs, files in os.walk(base_dir):
         relative_url = root.replace(base_dir, "")
         if not relative_url: relative_url = "/"
-        
-        # Saltar la carpeta de skills para no sobrescribir los archivos .md o .skill
-        if "skills" in root.split(os.sep):
-            print(f"Saltando índice para {relative_url} (directorio de skills)...")
+
+        parts = root.split(os.sep)
+        if "skills" in parts:
+            print(f"Skipping index for {relative_url} (skills directory)...")
             continue
-            
-        # Si es la raíz y ya existe un index.html (copiado de la plantilla), no lo sobrescribas
+
         if relative_url == "/" and os.path.exists(os.path.join(root, "index.html")):
-            print(f"Saltando índice para la raíz (ya existe index.html personalizado)...")
+            print(f"Skipping index for root (custom index.html already exists)...")
             continue
-            
-        print(f"Generando índice para {relative_url}...")
+
+        print(f"Generating index for {relative_url}...")
         generate_index(root, relative_url)
 
 if __name__ == "__main__":
@@ -88,4 +88,4 @@ if __name__ == "__main__":
     if os.path.exists(target):
         walk_and_index(target)
     else:
-        print(f"Error: El directorio {target} no existe.")
+        print(f"Error: Directory {target} does not exist.")

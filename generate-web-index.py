@@ -3,6 +3,8 @@ import os
 import re
 import subprocess
 import json
+import sys
+import tempfile
 
 def get_apt_packages(repo_name):
     packages = []
@@ -14,7 +16,7 @@ def get_apt_packages(repo_name):
             if "Packages:" in line:
                 start_index = i + 1
                 break
-        
+
         if start_index != -1:
             for line in lines[start_index:]:
                 line = line.strip()
@@ -37,9 +39,10 @@ def get_rpm_packages(rpm_dir):
     if not os.path.exists(rpm_dir): return packages
     for f in os.listdir(rpm_dir):
         if f.endswith(".rpm"):
-            match = re.match(r"^(.+)-([^-]+)-([^-]+)\.([^.]+)\.rpm$", f)
+            # RPM: name-version-release.arch.rpm
+            match = re.match(r"^(.+)-(\d[^-]*)-\d+\.([^.]+)\.rpm$", f)
             if match:
-                packages.append({"name": match.group(1), "version": match.group(2), "arch": match.group(4), "type": "rpm", "file": f})
+                packages.append({"name": match.group(1), "version": match.group(2), "arch": match.group(3), "type": "rpm", "file": f})
             else:
                 packages.append({"name": f.split("-")[0], "version": "unknown", "arch": "unknown", "type": "rpm", "file": f})
     return packages
@@ -48,8 +51,9 @@ def get_arch_packages(arch_dir):
     packages = []
     if not os.path.exists(arch_dir): return packages
     for f in os.listdir(arch_dir):
-        if f.endswith(".pkg.tar.zst") or f.endswith(".pkg.tar.xz"):
-            match = re.match(r"^(.+)-([^-]+)-([^-]+)-([^.]+)\.pkg\.tar\..+$", f)
+        if f.endswith(".pkg.tar.zst") or f.endswith(".pkg.tar.xz") or f.endswith(".pkg.tar.gz"):
+            # Arch: name-version-pkgrel-arch.pkg.tar.zst
+            match = re.match(r"^(.+)-(\d[^-]*)-(\d+)-([^.]+)\.pkg\.tar\..+$", f)
             if match:
                 packages.append({"name": match.group(1), "version": match.group(2), "arch": match.group(4), "type": "arch", "file": f})
             else:
@@ -57,10 +61,6 @@ def get_arch_packages(arch_dir):
     return packages
 
 def version_key(version_str):
-    """
-    Converts a version string (e.g. "1.0.17", "14.2-1") into a tuple of integers
-    for correct semantic version sorting.
-    """
     try:
         cleaned = re.sub(r'[^\d.]', '.', version_str)
         parts = [int(x) for x in cleaned.split('.') if x]
@@ -68,16 +68,14 @@ def version_key(version_str):
     except:
         return (0,)
 
-def generate_html(release_url):
-    # 1. Escanear estado actual
+def generate_html(release_url, key_id=None):
     apt_pkgs = get_apt_packages("inled-repo")
     rpm_pkgs = get_rpm_packages("public/rpm")
     arch_pkgs = get_arch_packages("public/arch")
     current_pkgs = apt_pkgs + rpm_pkgs + arch_pkgs
-    
+
     print(f"Scan: APT({len(apt_pkgs)}), RPM({len(rpm_pkgs)}), Arch({len(arch_pkgs)})")
 
-    # 2. Cargar/Actualizar JSON (Persistencia de metadatos)
     db_file = "packages.json"
     history = {}
     if os.path.exists(db_file):
@@ -87,70 +85,82 @@ def generate_html(release_url):
         except:
             history = {}
 
-    # Fusionar escaneo actual en el historial
+    # Merge current scan into history
+    current_names = set()
     for pkg in current_pkgs:
         name = pkg["name"]
-        if name not in history: history[name] = {"versions": {}}
-        
+        current_names.add(name)
+        if name not in history:
+            history[name] = {"versions": {}}
+
         version = pkg["version"]
-        if version not in history[name]["versions"]: history[name]["versions"][version] = []
-        
-        # Evitar duplicados por nombre de archivo
+        if version not in history[name]["versions"]:
+            history[name]["versions"][version] = []
+
         exists = any(p["file"] == pkg["file"] for p in history[name]["versions"][version])
         if not exists:
             history[name]["versions"][version].append(pkg)
 
-    # Guardar historial actualizado
+    # Remove packages no longer present in any scan
+    for name in list(history.keys()):
+        if name not in current_names:
+            del history[name]
+            print(f"Removed stale package from history: {name}")
+
     with open(db_file, "w") as f:
         json.dump(history, f, indent=2)
 
-    # 3. Generar HTML desde el Historial (para que no se olvide de nada)
     packages_html = ""
     if not history:
         packages_html = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No packages available.</p>'
     else:
         for name in sorted(history.keys()):
-            # Ordenar versiones semánticamente
             versions = sorted(history[name]["versions"].keys(), key=version_key, reverse=True)
             latest_overall_ver = versions[0]
-            
-            # Recopilar botones de las últimas versiones de cada tipo
+
             buttons_pkgs = []
             for p_type in ["deb", "rpm", "arch"]:
-                # Encontrar la versión más reciente que tenga este tipo
                 type_versions = []
                 for v in versions:
                     if any(p["type"] == p_type for p in history[name]["versions"][v]):
                         type_versions.append(v)
-                
+
                 if type_versions:
                     latest_type_ver = sorted(type_versions, key=version_key, reverse=True)[0]
                     buttons_pkgs.extend([p for p in history[name]["versions"][latest_type_ver] if p["type"] == p_type])
-            
-            desc = "Multi-platform application manager" if name == "appinstall" else "Optimized web browser" if name == "seafari" else f"Package for {name}"
-            
+
             item_html = f'<li class="package-item">'
             item_html += f'<div class="package-header"><span class="package-name">{name}</span><span class="package-version">v{latest_overall_ver}</span></div>'
-            item_html += f'<p class="package-desc">{desc}</p>'
+            item_html += f'<p class="package-desc">{name}</p>'
             item_html += f'<div class="package-footer">'
-            
+
             for pkg in sorted(buttons_pkgs, key=lambda x: (x["type"], x["arch"])):
                 arch_info = f' ({pkg["arch"]})' if pkg["arch"] != "unknown" else ""
                 ver_info = f' v{pkg["version"]}' if pkg["version"] != latest_overall_ver else ""
                 full_label = f"{pkg['type']}{arch_info}{ver_info}"
                 item_html += f'<a href="{release_url}/{pkg["file"]}" class="btn btn-sm btn-{pkg["type"]}">{full_label}</a>'
-            
+
             item_html += f'</div></li>'
             packages_html += item_html
 
     with open("index.html.template", "r") as f:
         template = f.read()
-    
-    final_html = template.replace("<!-- PACKAGES_LIST_PLACEHOLDER -->", packages_html).replace("<KEY_ID>", "EB2D78F1CBA07666726817967EDDC83147A77DD4")
-    with open("public/index.html", "w") as f:
-        f.write(final_html)
+
+    final_html = template.replace("<!-- PACKAGES_LIST_PLACEHOLDER -->", packages_html)
+    if key_id:
+        final_html = final_html.replace("<KEY_ID>", key_id)
+
+    os.makedirs("public", exist_ok=True)
+    tmp = tempfile.NamedTemporaryFile(mode="w", dir="public", delete=False, suffix=".html")
+    try:
+        tmp.write(final_html)
+        tmp.close()
+        os.replace(tmp.name, "public/index.html")
+    except:
+        os.unlink(tmp.name)
+        raise
 
 if __name__ == "__main__":
-    import sys
     url = sys.argv[1] if len(sys.argv) > 1 else "https://github.com/InledGroup/apt/releases/download/packages"
-    generate_html(url)
+    key_id = sys.argv[2] if len(sys.argv) > 2 else None
+    generate_html(url, key_id)

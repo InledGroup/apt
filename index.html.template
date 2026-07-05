@@ -212,8 +212,8 @@ SigLevel = PackageRequired
 Server = https://apt.inled.es/arch/
 
 # 2. Import and sign the GPG key
-sudo pacman-key --recv-keys EB2D78F1CBA07666726817967EDDC83147A77DD4
-sudo pacman-key --lsign-key EB2D78F1CBA07666726817967EDDC83147A77DD4
+sudo pacman-key --recv-keys <KEY_ID>
+sudo pacman-key --lsign-key <KEY_ID>
 
 # 3. Update and install
 sudo pacman -Sy</code></pre>

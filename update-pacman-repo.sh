@@ -1,79 +1,89 @@
 #!/bin/bash
 set -e
 
-# Configuración
-GPG_KEY_ID="repo@inled.es"
+# Configuration
 ARCH_DIR="public/arch"
 REPO_NAME="inled"
 
-echo "=== Configurando repositorio Arch Linux (Pacman) ==="
-
-# Asegurar directorios
-mkdir -p "$ARCH_DIR"
-
-# Añadir paquetes Arch desde la carpeta 'incoming'
-# Arch packages: .pkg.tar.zst, .pkg.tar.xz, .pkg.tar.gz
-if [ -d "incoming" ] && [ "$(ls -A incoming/*.pkg.tar.* 2>/dev/null)" ]; then
-    echo "Añadiendo nuevos paquetes Arch..."
-    cp incoming/*.pkg.tar.* "$ARCH_DIR/"
-    rm -rf incoming/*.pkg.tar.*
+# GPG fingerprint is passed from update-repo.sh; fall back to extracting it
+if [ -z "$GPG_FINGERPRINT" ]; then
+    GPG_FINGERPRINT=$(gpg --list-keys --with-colons "repo@inled.es" 2>/dev/null | grep '^fpr:' | head -1 | cut -d: -f10)
 fi
 
-# Verificar si hay paquetes para procesar
-if [ ! "$(ls -A "$ARCH_DIR"/*.pkg.tar.* 2>/dev/null)" ]; then
-    echo "No hay paquetes Arch en $ARCH_DIR. Saltando generación de base de datos."
+if [ -z "$GPG_FINGERPRINT" ]; then
+    echo "ERROR: No GPG fingerprint available. Set GPG_FINGERPRINT or ensure key exists."
+    exit 1
+fi
+
+echo "=== Configuring Arch Linux repository (Pacman) ==="
+echo "Using GPG fingerprint: $GPG_FINGERPRINT"
+
+# Ensure directories
+mkdir -p "$ARCH_DIR"
+
+# Add Arch packages from 'incoming'
+shopt -s nullglob
+incoming_pkgs=(incoming/*.pkg.tar.*)
+shopt -u nullglob
+if [ ${#incoming_pkgs[@]} -gt 0 ]; then
+    echo "Adding new Arch packages..."
+    cp incoming/*.pkg.tar.* "$ARCH_DIR/"
+    rm -f incoming/*.pkg.tar.*
+fi
+
+# Check if there are packages to process
+shopt -s nullglob
+arch_pkgs=("$ARCH_DIR"/*.pkg.tar.*)
+shopt -u nullglob
+if [ ${#arch_pkgs[@]} -eq 0 ]; then
+    echo "No Arch packages in $ARCH_DIR. Skipping database generation."
     exit 0
 fi
 
-# Generar/Actualizar la base de datos del repositorio
-echo "Actualizando base de datos con repo-add..."
-# repo-add [opciones] <ruta-a-la-db> <ruta-al-paquete>
-
-# Archivos de base de datos
-# Usamos .db.tar.gz porque repo-add lo requiere estrictamente.
-# Luego convertiremos los enlaces simbólicos en archivos reales para Cloudflare Pages.
+# Generate/Update database
+echo "Updating database with repo-add..."
 DB_FILE="$ARCH_DIR/$REPO_NAME.db.tar.gz"
-FILES_FILE="$ARCH_DIR/$REPO_NAME.files.tar.gz"
 
-# Recopilar todos los paquetes válidos para procesarlos de una vez
+# Collect valid packages
 PKGS_TO_ADD=()
-
 for pkg in "$ARCH_DIR"/*.pkg.tar.*; do
-    # No procesar firmas como paquetes
     if [[ "$pkg" == *.sig ]]; then continue; fi
-    
-    echo "Procesando paquete: $pkg"
-    
-    # Firmar el paquete si no está firmado
+    echo "Processing package: $pkg"
     if [ ! -f "$pkg.sig" ]; then
-        echo "Firmando paquete $pkg..."
-        gpg --batch --yes --detach-sign --default-key "$GPG_KEY_ID" "$pkg"
+        echo "Signing package $pkg..."
+        gpg --batch --yes --detach-sign --default-key "$GPG_FINGERPRINT" "$pkg"
     fi
-    
     PKGS_TO_ADD+=("$pkg")
 done
 
 if [ ${#PKGS_TO_ADD[@]} -eq 0 ]; then
-    echo "No hay nuevos paquetes válidos para añadir."
+    echo "No valid packages to add."
     exit 0
 fi
 
-# Añadir a la base de datos (procesar todos a la vez es más eficiente)
-# -n (new) solo añade paquetes que no están, -f (force) sobreescribe
-echo "Ejecutando repo-add para ${#PKGS_TO_ADD[@]} paquetes..."
-repo-add --sign --key "$GPG_KEY_ID" "$DB_FILE" "${PKGS_TO_ADD[@]}"
+echo "Running repo-add for ${#PKGS_TO_ADD[@]} packages..."
+repo-add --sign --key "$GPG_FINGERPRINT" "$DB_FILE" "${PKGS_TO_ADD[@]}"
 
-# Solución para Cloudflare Pages: reemplazar enlaces simbólicos por archivos reales
-# repo-add crea enlaces simbólicos (ej: inled.db -> inled.db.tar.gz)
-# Cloudflare los sirve como texto, lo que rompe pacman.
-echo "Corrigiendo enlaces simbólicos para Cloudflare Pages..."
-for file in "$ARCH_DIR/$REPO_NAME.db" "$ARCH_DIR/$REPO_NAME.files" "$ARCH_DIR/$REPO_NAME.db.sig" "$ARCH_DIR/$REPO_NAME.files.sig"; do
-    if [ -L "$file" ]; then
-        target=$(readlink -f "$file")
-        echo "Convirtiendo enlace simbólico en archivo real: $file -> $target"
-        rm "$file"
-        cp "$target" "$file"
+# Fix symlinks for Cloudflare Pages
+echo "Fixing symlinks for Cloudflare Pages..."
+for link in "$ARCH_DIR/$REPO_NAME.db" "$ARCH_DIR/$REPO_NAME.files"; do
+    if [ -L "$link" ]; then
+        target=$(readlink -f "$link")
+        echo "Converting symlink to real file: $link -> $target"
+        rm "$link"
+        cp "$target" "$link"
     fi
 done
 
-echo "Repositorio Arch Linux actualizado con éxito en '$ARCH_DIR/'"
+# Ensure .db.sig and .files.sig exist
+for sig_src in "$ARCH_DIR/$REPO_NAME.db.tar.gz.sig" "$ARCH_DIR/$REPO_NAME.files.tar.gz.sig"; do
+    if [ -f "$sig_src" ]; then
+        sig_dst="${sig_src%.tar.gz.sig}.sig"
+        if [ ! -f "$sig_dst" ]; then
+            echo "Creating $sig_dst symlink for pacman compatibility..."
+            cp "$sig_src" "$sig_dst"
+        fi
+    fi
+done
+
+echo "Arch Linux repository updated successfully in '$ARCH_DIR/'"

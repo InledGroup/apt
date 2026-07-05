@@ -2,7 +2,7 @@
   "name": "inled-apt-repo",
   "private": true,
   "scripts": {
-    "dev": "python3 generate-web-index.py && serve public",
+    "dev": "python3 generate-web-index.py && npx serve public",
     "build": "python3 generate-web-index.py"
   },
   "devDependencies": {

@@ -56,7 +56,7 @@ Include these commands to trust the repository key:
 ```bash
 # Import and trust the key
 curl -s https://apt.inled.es/archive.key | sudo pacman-key -a -
-sudo pacman-key --lsign-key EB2D78F1CBA07666726817967EDDC83147A77DD4
+sudo pacman-key --lsign-key <KEY_ID>
 
 # Add the repository to /etc/pacman.conf
 sudo tee -a /etc/pacman.conf <<EOF

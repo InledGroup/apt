@@ -64,7 +64,9 @@ jobs:
           echo "REBUILD flag detected: re-downloading all packages for re-signing..."
           gh release download packages --dir incoming --repo ${{ github.repository }} --clobber || echo "No release yet"
           mv incoming/packages.json . 2>/dev/null || true
-          echo "All packages downloaded. They will be re-signed in the next steps."
+          # Remove old signatures so packages get re-signed with the current GPG key
+          rm -f incoming/*.sig
+          echo "All packages downloaded. Old signatures removed. Re-signing will happen in the next steps."
         env:
           GH_TOKEN: ${{ github.token }}
 

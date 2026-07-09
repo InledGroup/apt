@@ -16,6 +16,10 @@ on:
         description: "Set to true to re-download and re-sign all packages"
         required: false
         default: "false"
+      branch:
+        description: "Target branch/distribution (stable, forky, rolling)"
+        required: false
+        default: "stable"
 
 permissions:
   contents: write
@@ -132,6 +136,15 @@ jobs:
           RELEASE_TAG="packages"
           export RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}"
           export GPG_FINGERPRINT="${{ steps.gpg.outputs.fingerprint }}"
+          
+          # Parse target branch/distribution from repository_dispatch or workflow_dispatch
+          PAYLOAD_OBJ=$(echo '${{ toJson(github.event.client_payload) }}' | jq 'if type == "string" then fromjson else . end' 2>/dev/null || echo "{}")
+          export DISTRIBUTION=$(echo "$PAYLOAD_OBJ" | jq -r '.branch // empty')
+          if [ -z "$DISTRIBUTION" ] || [ "$DISTRIBUTION" == "null" ]; then
+            export DISTRIBUTION="${{ github.event.inputs.branch || 'stable' }}"
+          fi
+          echo "Updating repository for distribution branch: $DISTRIBUTION"
+          
           ./update-repo.sh
         env:
           RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/packages

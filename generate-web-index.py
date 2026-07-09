@@ -70,6 +70,8 @@ def version_key(version_str):
 
 def generate_html(release_url, key_id=None):
     apt_pkgs = get_apt_packages("inled-repo")
+    apt_pkgs += get_apt_packages("inled-repo-forky")
+    apt_pkgs += get_apt_packages("inled-repo-rolling")
     rpm_pkgs = get_rpm_packages("public/rpm")
     arch_pkgs = get_arch_packages("public/arch")
     current_pkgs = apt_pkgs + rpm_pkgs + arch_pkgs

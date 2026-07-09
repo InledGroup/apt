@@ -2,8 +2,11 @@
 set -e
 
 # Configuration
+DISTRIBUTION="${DISTRIBUTION:-stable}"
 REPO_NAME="inled-repo"
-DISTRIBUTION="stable"
+if [ "$DISTRIBUTION" != "stable" ]; then
+    REPO_NAME="inled-repo-$DISTRIBUTION"
+fi
 COMPONENT="main"
 GPG_KEY_ID="repo@inled.es"
 

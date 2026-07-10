@@ -321,12 +321,9 @@ sudo pacman -Sy</code></pre>
                 let currentBranch = 'all';
                 let currentSearch = '';
 
-                function getBranchForVersion(version, type) {
-                    if (type !== 'deb') return 'other';
-                    if (version.includes('+deb13')) return 'stable';
-                    if (version.includes('+deb14')) return 'forky';
-                    if (version.includes('+rolling')) return 'rolling';
-                    return 'stable'; // fallback
+                function getBranchForVersion(pkg) {
+                    if (pkg.type !== 'deb') return 'other';
+                    return pkg.branch || 'stable';
                 }
 
                 function getBranchBadgeHtml(branch) {
@@ -370,7 +367,7 @@ sudo pacman -Sy</code></pre>
                         versions.forEach(v => {
                             const pkgs = pkgInfo.versions[v];
                             pkgs.forEach(pkg => {
-                                const branch = getBranchForVersion(pkg.version, pkg.type);
+                                const branch = getBranchForVersion(pkg);
                                 
                                 // Apply tab filtering
                                 if (currentBranch !== 'all' && branch !== currentBranch) {

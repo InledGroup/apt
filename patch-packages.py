@@ -18,7 +18,9 @@ def generate_redirects_from_packages(base_dir, release_url):
             matches = re.findall(r'^Filename: (.*)$', content, re.MULTILINE)
             for local_path in matches:
                 filename = os.path.basename(local_path)
-                redirects.append(f"/{local_path} {release_url}/{filename} 302")
+                # Replace '+' with '%2b' in the source path to match URL-encoded requests from apt
+                cf_source = local_path.replace("+", "%2b")
+                redirects.append(f"/{cf_source} {release_url}/{filename} 302")
                 print(f"    + Found package: {filename}")
 
     if not redirects:

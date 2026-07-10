@@ -18,6 +18,12 @@ def get_apt_packages(repo_name):
                 break
 
         if start_index != -1:
+            branch = "stable"
+            if "forky" in repo_name:
+                branch = "forky"
+            elif "rolling" in repo_name:
+                branch = "rolling"
+
             for line in lines[start_index:]:
                 line = line.strip()
                 if not line: continue
@@ -28,6 +34,7 @@ def get_apt_packages(repo_name):
                         "version": parts[1],
                         "arch": parts[2],
                         "type": "deb",
+                        "branch": branch,
                         "file": f"{parts[0]}_{parts[1]}_{parts[2]}.deb"
                     })
     except Exception as e:
@@ -87,6 +94,15 @@ def generate_html(release_url, key_id=None):
         except:
             history = {}
 
+    # Clean up history: remove any old suffixed versions (+deb13, +deb14, +rolling)
+    # for pulsaros-* and gnome-macos-remap-wayland packages.
+    for name in list(history.keys()):
+        if name.startswith("pulsaros-") or name == "gnome-macos-remap-wayland":
+            versions_to_delete = [v for v in history[name]["versions"] if "+" in v or "deb1" in v or "rolling" in v]
+            for v in versions_to_delete:
+                print(f"Purging old historical version {v} for {name} from packages.json")
+                del history[name]["versions"][v]
+
     # Merge current scan into history
     current_names = set()
     for pkg in current_pkgs:
@@ -126,14 +142,7 @@ def generate_html(release_url, key_id=None):
                 for pkg in history[name]["versions"][v]:
                     p_type = pkg["type"]
                     if p_type == "deb":
-                        if "+deb13" in pkg["version"]:
-                            branch = "stable"
-                        elif "+deb14" in pkg["version"]:
-                            branch = "forky"
-                        elif "+rolling" in pkg["version"]:
-                            branch = "rolling"
-                        else:
-                            branch = "stable" # legacy
+                        branch = pkg.get("branch", "stable")
                     else:
                         branch = p_type # rpm, arch, etc.
                     

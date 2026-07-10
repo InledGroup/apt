@@ -39,15 +39,43 @@ for dist in stable forky rolling; do
         aptly -config=aptly.conf repo create -comment="Inled APT Repository" -distribution="$dist" -component="$COMPONENT" "$dist_repo"
     fi
 
-    # Add packages from 'incoming' (only for the distribution being deployed in this trigger)
-    if [ "$dist" = "$DISTRIBUTION" ]; then
-        shopt -s nullglob
-        deb_files=(incoming/*.deb)
-        shopt -u nullglob
-        if [ ${#deb_files[@]} -gt 0 ]; then
-            echo "Syncing packages with $dist_repo..."
-            aptly -config=aptly.conf repo add -force-replace "$dist_repo" incoming/
+    # Add matching packages from 'incoming' that belong to this distribution
+    matching_debs=()
+    shopt -s nullglob
+    for deb in incoming/*.deb; do
+        filename=$(basename "$deb")
+        if [ "$dist" = "forky" ]; then
+            if [[ "$filename" == *"+deb14"* ]]; then
+                matching_debs+=("$deb")
+            fi
+        elif [ "$dist" = "rolling" ]; then
+            if [[ "$filename" == *"+rolling"* ]]; then
+                matching_debs+=("$deb")
+            fi
+        else # stable
+            if [[ "$filename" == *"+deb13"* ]]; then
+                matching_debs+=("$deb")
+            elif [[ "$filename" != *"+deb14"* ]] && [[ "$filename" != *"+rolling"* ]]; then
+                matching_debs+=("$deb")
+            fi
         fi
+    done
+    shopt -u nullglob
+
+    if [ ${#matching_debs[@]} -gt 0 ]; then
+        # Purge existing versions of the matching packages from the repo first
+        # to ensure that we don't leave old versions with different version formats (like +rolling) side-by-side.
+        for deb in "${matching_debs[@]}"; do
+            # Extract package name from deb file using dpkg-deb (safe and exact)
+            pkg_name=$(dpkg-deb -f "$deb" Package)
+            if [ -n "$pkg_name" ]; then
+                echo "Purging old versions of $pkg_name from $dist_repo..."
+                aptly -config=aptly.conf repo remove "$dist_repo" "Name (= $pkg_name)" || true
+            fi
+        done
+
+        echo "Syncing matching packages with $dist_repo..."
+        aptly -config=aptly.conf repo add -force-replace "$dist_repo" "${matching_debs[@]}"
     fi
 
     # Publish or update this distribution

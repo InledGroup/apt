@@ -148,7 +148,12 @@ def generate_html(release_url, key_id=None):
     with open("index.html.template", "r") as f:
         template = f.read()
 
+    # Dump the history dict to JSON string for client-side rendering
+    db_json = json.dumps(history)
+
     final_html = template.replace("<!-- PACKAGES_LIST_PLACEHOLDER -->", packages_html)
+    final_html = final_html.replace("<!-- PACKAGES_DB_PLACEHOLDER -->", db_json)
+    final_html = final_html.replace("<!-- RELEASE_URL_PLACEHOLDER -->", release_url)
     if key_id:
         final_html = final_html.replace("<KEY_ID>", key_id)
 

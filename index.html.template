@@ -150,6 +150,67 @@
         .alert-info { background: #deebff; color: #0747a6; border: 1px solid #b3d4ff; }
         .alert-warning { background: #fffae6; color: #826a00; border: 1px solid #fff0b3; }
         
+        /* Branch selector tabs */
+        .branch-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .branch-tab {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .branch-tab:hover {
+            color: var(--primary);
+            background-color: var(--code-bg);
+        }
+        .branch-tab.active {
+            color: white;
+            background-color: var(--primary);
+        }
+
+        /* Package row item style */
+        .package-ver-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 6px;
+            transition: transform 0.1s;
+        }
+        .package-ver-row:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        .badge-stable { background: #deebff; color: #0747a6; }
+        .badge-forky { background: #e3fcef; color: #006644; }
+        .badge-rolling { background: #ffebe6; color: #bf2600; }
+        .badge-other { background: #f4f5f7; color: #5e6c84; }
+
         footer {
             text-align: center;
             margin-top: 60px;
@@ -162,6 +223,8 @@
             .container { margin: 20px auto; }
             h1 { font-size: 1.8rem; }
             .package-list { grid-template-columns: 1fr; }
+            .package-ver-row { flex-direction: column; align-items: stretch; gap: 8px; }
+            .package-ver-row .btn-sm { width: 100%; }
         }
     </style>
 </head>
@@ -226,7 +289,16 @@ sudo pacman -Sy</code></pre>
 
         <section class="card">
             <h2>Available packages</h2>
+            
+            <div class="branch-selector" id="branch-selector">
+                <button class="branch-tab active" data-branch="all">All Branches</button>
+                <button class="branch-tab" data-branch="stable">Stable (Trixie)</button>
+                <button class="branch-tab" data-branch="forky">Forky (Testing)</button>
+                <button class="branch-tab" data-branch="rolling">Rolling Release</button>
+            </div>
+
             <input type="text" id="search" placeholder="Search packages..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box;">
+            
             <div id="packages-container">
                 <ul class="package-list" id="package-list">
                     <!-- PACKAGES_LIST_PLACEHOLDER -->
@@ -234,14 +306,155 @@ sudo pacman -Sy</code></pre>
             </div>
         </section>
 
+        <!-- Embedded Package Database -->
         <script>
-            document.getElementById('search').addEventListener('input', function() {
-                const q = this.value.toLowerCase();
-                document.querySelectorAll('.package-item').forEach(function(item) {
-                    const name = item.querySelector('.package-name').textContent.toLowerCase();
-                    item.style.display = name.includes(q) ? '' : 'none';
+            window.packagesDb = <!-- PACKAGES_DB_PLACEHOLDER -->;
+            window.releaseUrl = "<!-- RELEASE_URL_PLACEHOLDER -->";
+        </script>
+
+        <script>
+            (function() {
+                if (!window.packagesDb || Object.keys(window.packagesDb).length === 0) {
+                    return; // fallback to static HTML if no DB is injected
+                }
+
+                let currentBranch = 'all';
+                let currentSearch = '';
+
+                function getBranchForVersion(version, type) {
+                    if (type !== 'deb') return 'other';
+                    if (version.includes('+deb13')) return 'stable';
+                    if (version.includes('+deb14')) return 'forky';
+                    if (version.includes('+rolling')) return 'rolling';
+                    return 'stable'; // fallback
+                }
+
+                function getBranchBadgeHtml(branch) {
+                    if (branch === 'stable') return '<span class="badge badge-stable">stable</span>';
+                    if (branch === 'forky') return '<span class="badge badge-forky">forky</span>';
+                    if (branch === 'rolling') return '<span class="badge badge-rolling">rolling</span>';
+                    return '<span class="badge badge-other">other</span>';
+                }
+
+                // Simple version comparison helper (SemVer fallback)
+                function compareVersions(a, b) {
+                    const clean = str => str.replace(/[^\d.]/g, '.').split('.').map(Number).filter(x => !isNaN(x));
+                    const partsA = clean(a);
+                    const partsB = clean(b);
+                    for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+                        const valA = partsA[i] || 0;
+                        const valB = partsB[i] || 0;
+                        if (valA !== valB) return valB - valA; // reverse order
+                    }
+                    return b.localeCompare(a);
+                }
+
+                function render() {
+                    const list = document.getElementById('package-list');
+                    list.innerHTML = '';
+
+                    const names = Object.keys(window.packagesDb).sort();
+                    let renderedCount = 0;
+
+                    names.forEach(name => {
+                        if (currentSearch && !name.toLowerCase().includes(currentSearch)) {
+                            return;
+                        }
+
+                        const pkgInfo = window.packagesDb[name];
+                        const versions = Object.keys(pkgInfo.versions).sort(compareVersions);
+                        
+                        // Filter versions based on selected branch tab
+                        let filteredVersions = versions;
+                        if (currentBranch !== 'all') {
+                            filteredVersions = versions.filter(v => {
+                                return pkgInfo.versions[v].some(p => getBranchForVersion(p.version, p.type) === currentBranch);
+                            });
+                        }
+
+                        if (filteredVersions.length === 0) return;
+
+                        renderedCount++;
+                        const latestVer = filteredVersions[0];
+
+                        // Card base
+                        const li = document.createElement('li');
+                        li.className = 'package-item';
+
+                        // Header (Name and Latest Version for the selected context)
+                        const header = document.createElement('div');
+                        header.className = 'package-header';
+                        header.innerHTML = `<span class="package-name">${name}</span><span class="package-version">v${latestVer}</span>`;
+                        li.appendChild(header);
+
+                        // Description
+                        const desc = document.createElement('p');
+                        desc.className = 'package-desc';
+                        desc.textContent = name; // could fall back to description field
+                        li.appendChild(desc);
+
+                        // Version list and download buttons container
+                        const footer = document.createElement('div');
+                        footer.className = 'package-footer';
+                        footer.style.display = 'flex';
+                        footer.style.flexDirection = 'column';
+                        footer.style.gap = '8px';
+                        footer.style.marginTop = '15px';
+                        footer.style.width = '100%';
+
+                        filteredVersions.forEach(v => {
+                            const pkgs = pkgInfo.versions[v];
+                            pkgs.forEach(pkg => {
+                                const row = document.createElement('div');
+                                row.className = 'package-ver-row';
+
+                                const label = document.createElement('div');
+                                label.style.display = 'flex';
+                                label.style.alignItems = 'center';
+                                
+                                const branch = getBranchForVersion(pkg.version, pkg.type);
+                                const badge = pkg.type === 'deb' ? getBranchBadgeHtml(branch) : `<span class="badge badge-other">${pkg.type}</span>`;
+                                
+                                label.innerHTML = `${badge}<span style="font-size:0.85rem;font-weight:600;">v${pkg.version}</span> <span style="font-size:0.75rem;color:var(--text-muted);margin-left:5px;">(${pkg.arch})</span>`;
+                                
+                                const link = document.createElement('a');
+                                link.href = `${window.releaseUrl}/${pkg.file}`;
+                                link.className = `btn btn-sm btn-${pkg.type}`;
+                                link.textContent = 'Download';
+                                
+                                row.appendChild(label);
+                                row.appendChild(link);
+                                footer.appendChild(row);
+                            });
+                        });
+
+                        li.appendChild(footer);
+                        list.appendChild(li);
+                    });
+
+                    if (renderedCount === 0) {
+                        list.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:20px 0;">No packages found matching the filters.</p>';
+                    }
+                }
+
+                // Attach events
+                document.getElementById('search').addEventListener('input', function() {
+                    currentSearch = this.value.toLowerCase().trim();
+                    render();
                 });
-            });
+
+                document.querySelectorAll('.branch-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        document.querySelector('.branch-tab.active').classList.remove('active');
+                        this.classList.add('active');
+                        currentBranch = this.getAttribute('data-branch');
+                        render();
+                    });
+                });
+
+                // Initial render replacement
+                render();
+            })();
         </script>
 
         <section class="card">

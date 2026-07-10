@@ -364,18 +364,34 @@ sudo pacman -Sy</code></pre>
                         const pkgInfo = window.packagesDb[name];
                         const versions = Object.keys(pkgInfo.versions).sort(compareVersions);
                         
-                        // Filter versions based on selected branch tab
-                        let filteredVersions = versions;
-                        if (currentBranch !== 'all') {
-                            filteredVersions = versions.filter(v => {
-                                return pkgInfo.versions[v].some(p => getBranchForVersion(p.version, p.type) === currentBranch);
+                        // Group packages by branch and only keep the latest version for each branch
+                        const latestByBranch = {};
+                        
+                        versions.forEach(v => {
+                            const pkgs = pkgInfo.versions[v];
+                            pkgs.forEach(pkg => {
+                                const branch = getBranchForVersion(pkg.version, pkg.type);
+                                
+                                // Apply tab filtering
+                                if (currentBranch !== 'all' && branch !== currentBranch) {
+                                    return;
+                                }
+                                
+                                // If we don't have a package for this branch yet, or this one is newer (sort order means compareVersions < 0)
+                                if (!latestByBranch[branch] || compareVersions(pkg.version, latestByBranch[branch].version) < 0) {
+                                    latestByBranch[branch] = pkg;
+                                }
                             });
-                        }
+                        });
 
-                        if (filteredVersions.length === 0) return;
+                        const branchesToRender = Object.keys(latestByBranch);
+                        if (branchesToRender.length === 0) return;
 
                         renderedCount++;
-                        const latestVer = filteredVersions[0];
+                        
+                        // Pick latest version among the ones we are displaying
+                        const displayedVersions = branchesToRender.map(b => latestByBranch[b].version).sort(compareVersions);
+                        const latestVer = displayedVersions[0];
 
                         // Card base
                         const li = document.createElement('li');
@@ -402,30 +418,35 @@ sudo pacman -Sy</code></pre>
                         footer.style.marginTop = '15px';
                         footer.style.width = '100%';
 
-                        filteredVersions.forEach(v => {
-                            const pkgs = pkgInfo.versions[v];
-                            pkgs.forEach(pkg => {
-                                const row = document.createElement('div');
-                                row.className = 'package-ver-row';
+                        // Sort branches so stable comes first, then forky, then rolling
+                        const branchOrder = ['stable', 'forky', 'rolling', 'other', 'rpm', 'arch'];
+                        branchesToRender.sort((a, b) => {
+                            const idxA = branchOrder.indexOf(a) !== -1 ? branchOrder.indexOf(a) : 99;
+                            const idxB = branchOrder.indexOf(b) !== -1 ? branchOrder.indexOf(b) : 99;
+                            return idxA - idxB;
+                        });
 
-                                const label = document.createElement('div');
-                                label.style.display = 'flex';
-                                label.style.alignItems = 'center';
-                                
-                                const branch = getBranchForVersion(pkg.version, pkg.type);
-                                const badge = pkg.type === 'deb' ? getBranchBadgeHtml(branch) : `<span class="badge badge-other">${pkg.type}</span>`;
-                                
-                                label.innerHTML = `${badge}<span style="font-size:0.85rem;font-weight:600;">v${pkg.version}</span> <span style="font-size:0.75rem;color:var(--text-muted);margin-left:5px;">(${pkg.arch})</span>`;
-                                
-                                const link = document.createElement('a');
-                                link.href = `${window.releaseUrl}/${pkg.file}`;
-                                link.className = `btn btn-sm btn-${pkg.type}`;
-                                link.textContent = 'Download';
-                                
-                                row.appendChild(label);
-                                row.appendChild(link);
-                                footer.appendChild(row);
-                            });
+                        branchesToRender.forEach(branch => {
+                            const pkg = latestByBranch[branch];
+                            const row = document.createElement('div');
+                            row.className = 'package-ver-row';
+
+                            const label = document.createElement('div');
+                            label.style.display = 'flex';
+                            label.style.alignItems = 'center';
+                            
+                            const badge = pkg.type === 'deb' ? getBranchBadgeHtml(branch) : `<span class="badge badge-other">${pkg.type}</span>`;
+                            
+                            label.innerHTML = `${badge}<span style="font-size:0.85rem;font-weight:600;">v${pkg.version}</span> <span style="font-size:0.75rem;color:var(--text-muted);margin-left:5px;">(${pkg.arch})</span>`;
+                            
+                            const link = document.createElement('a');
+                            link.href = `${window.releaseUrl}/${pkg.file}`;
+                            link.className = `btn btn-sm btn-${pkg.type}`;
+                            link.textContent = 'Download';
+                            
+                            row.appendChild(label);
+                            row.appendChild(link);
+                            footer.appendChild(row);
                         });
 
                         li.appendChild(footer);

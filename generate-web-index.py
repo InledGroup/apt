@@ -120,16 +120,30 @@ def generate_html(release_url, key_id=None):
             versions = sorted(history[name]["versions"].keys(), key=version_key, reverse=True)
             latest_overall_ver = versions[0]
 
-            buttons_pkgs = []
-            for p_type in ["deb", "rpm", "arch"]:
-                type_versions = []
-                for v in versions:
-                    if any(p["type"] == p_type for p in history[name]["versions"][v]):
-                        type_versions.append(v)
+            # Group by branch/dist and keep only the latest version per branch
+            latest_by_branch = {}
+            for v in versions:
+                for pkg in history[name]["versions"][v]:
+                    p_type = pkg["type"]
+                    if p_type == "deb":
+                        if "+deb13" in pkg["version"]:
+                            branch = "stable"
+                        elif "+deb14" in pkg["version"]:
+                            branch = "forky"
+                        elif "+rolling" in pkg["version"]:
+                            branch = "rolling"
+                        else:
+                            branch = "stable" # legacy
+                    else:
+                        branch = p_type # rpm, arch, etc.
+                    
+                    if branch not in latest_by_branch:
+                        latest_by_branch[branch] = pkg
+                    else:
+                        if version_key(pkg["version"]) > version_key(latest_by_branch[branch]["version"]):
+                            latest_by_branch[branch] = pkg
 
-                if type_versions:
-                    latest_type_ver = sorted(type_versions, key=version_key, reverse=True)[0]
-                    buttons_pkgs.extend([p for p in history[name]["versions"][latest_type_ver] if p["type"] == p_type])
+            buttons_pkgs = list(latest_by_branch.values())
 
             item_html = f'<li class="package-item">'
             item_html += f'<div class="package-header"><span class="package-name">{name}</span><span class="package-version">v{latest_overall_ver}</span></div>'

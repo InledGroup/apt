@@ -25,29 +25,40 @@ echo "Using GPG key: $GPG_KEY_ID (fingerprint: $GPG_FINGERPRINT)"
 # Ensure directories
 mkdir -p .aptly public
 
-# Initialize repository if needed
-if ! aptly -config=aptly.conf repo show "$REPO_NAME" > /dev/null 2>&1; then
-    echo "Creating repository $REPO_NAME..."
-    aptly -config=aptly.conf repo create -comment="Inled APT Repository" -distribution="$DISTRIBUTION" -component="$COMPONENT" "$REPO_NAME"
-fi
+# Loop through all three distributions to sync and publish/update them together.
+# This ensures Cloudflare Pages deployment always gets a complete set of files for all branches.
+for dist in stable forky rolling; do
+    dist_repo="inled-repo"
+    if [ "$dist" != "stable" ]; then
+        dist_repo="inled-repo-$dist"
+    fi
 
-# Add packages from 'incoming'
-shopt -s nullglob
-deb_files=(incoming/*.deb)
-shopt -u nullglob
-if [ ${#deb_files[@]} -gt 0 ]; then
-    echo "Syncing packages with APT repository..."
-    aptly -config=aptly.conf repo add -force-replace "$REPO_NAME" incoming/
-fi
+    # Initialize repository if needed
+    if ! aptly -config=aptly.conf repo show "$dist_repo" > /dev/null 2>&1; then
+        echo "Creating repository $dist_repo..."
+        aptly -config=aptly.conf repo create -comment="Inled APT Repository" -distribution="$dist" -component="$COMPONENT" "$dist_repo"
+    fi
 
-# Publish or update
-if ! aptly -config=aptly.conf publish list | grep -q "$DISTRIBUTION"; then
-    echo "Publishing for first time..."
-    aptly publish repo -config=aptly.conf -distribution="$DISTRIBUTION" "$REPO_NAME" filesystem:public:
-else
-    echo "Updating publication..."
-    aptly publish update -force-overwrite -config=aptly.conf "$DISTRIBUTION" filesystem:public:
-fi
+    # Add packages from 'incoming' (only for the distribution being deployed in this trigger)
+    if [ "$dist" = "$DISTRIBUTION" ]; then
+        shopt -s nullglob
+        deb_files=(incoming/*.deb)
+        shopt -u nullglob
+        if [ ${#deb_files[@]} -gt 0 ]; then
+            echo "Syncing packages with $dist_repo..."
+            aptly -config=aptly.conf repo add -force-replace "$dist_repo" incoming/
+        fi
+    fi
+
+    # Publish or update this distribution
+    if ! aptly -config=aptly.conf publish list | grep -q "$dist"; then
+        echo "Publishing distribution '$dist' for first time..."
+        aptly publish repo -config=aptly.conf -distribution="$dist" "$dist_repo" filesystem:public:
+    else
+        echo "Updating publication for distribution '$dist'..."
+        aptly publish update -force-overwrite -config=aptly.conf "$dist" filesystem:public:
+    fi
+done
 
 # Patch Packages files to point to release URL, then regenerate Release signatures
 if [ -n "$RELEASE_URL" ]; then

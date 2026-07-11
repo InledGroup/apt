@@ -55,8 +55,15 @@ jobs:
       - name: Sync and Reconstruct Repositories
         run: |
           mkdir -p incoming public/rpm public/arch
-          echo "Reconstructing repositories from GitHub Releases..."
-          gh release download packages --pattern "packages.json" --dir . --repo ${{ github.repository }} --clobber || echo "No previous packages.json"
+          if [ ! -d ".aptly/db" ]; then
+            echo "Aptly database cache not found. Reconstructing database from GitHub Release..."
+            gh release download packages --dir incoming --repo ${{ github.repository }} --clobber || echo "No release yet"
+            mv incoming/packages.json . 2>/dev/null || true
+            rm -f incoming/*.sig
+          else
+            echo "Aptly database cache is present. Downloading packages.json only..."
+            gh release download packages --pattern "packages.json" --dir . --repo ${{ github.repository }} --clobber || echo "No previous packages.json"
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
 

@@ -48,9 +48,9 @@ jobs:
             .aptly
             public/rpm
             public/arch
-          key: ${{ runner.os }}-aptly-cache
+          key: ${{ runner.os }}-aptly-cache-v2
           restore-keys: |
-            ${{ runner.os }}-aptly-
+            ${{ runner.os }}-aptly-v2-
 
       - name: Sync and Reconstruct Repositories
         run: |

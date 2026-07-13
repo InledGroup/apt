@@ -64,17 +64,17 @@ for dist in stable forky rolling; do
     for deb in incoming/*.deb; do
         filename=$(basename "$deb")
         if [ "$dist" = "forky" ]; then
-            if [[ "$filename" == *"+deb14"* ]]; then
+            if [[ "$filename" == *"deb14"* ]]; then
                 matching_debs+=("$deb")
             fi
         elif [ "$dist" = "rolling" ]; then
-            if [[ "$filename" == *"+rolling"* ]]; then
+            if [[ "$filename" == *"rolling"* ]]; then
                 matching_debs+=("$deb")
             fi
         else # stable
-            if [[ "$filename" == *"+deb13"* ]]; then
+            if [[ "$filename" == *"deb13"* ]]; then
                 matching_debs+=("$deb")
-            elif [[ "$filename" != *"+deb14"* ]] && [[ "$filename" != *"+rolling"* ]]; then
+            elif [[ "$filename" != *"deb14"* ]] && [[ "$filename" != *"rolling"* ]]; then
                 matching_debs+=("$deb")
             fi
         fi

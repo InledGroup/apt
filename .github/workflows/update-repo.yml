@@ -48,9 +48,9 @@ jobs:
             .aptly
             public/rpm
             public/arch
-          key: ${{ runner.os }}-aptly-cache-v2
+          key: ${{ runner.os }}-aptly-cache-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-aptly-v2-
+            ${{ runner.os }}-aptly-cache-
 
       - name: Sync and Reconstruct Repositories
         run: |
@@ -171,15 +171,15 @@ jobs:
             local asset_name="$1"
             local dist="$2"
             if [ "$dist" = "forky" ]; then
-              [[ "$asset_name" == *"+deb14"* ]]
+              [[ "$asset_name" == *"deb14"* ]]
               return $?
             elif [ "$dist" = "rolling" ]; then
-              [[ "$asset_name" == *"+rolling"* ]]
+              [[ "$asset_name" == *"rolling"* ]]
               return $?
             else
-              if [[ "$asset_name" == *"+deb13"* ]]; then
+              if [[ "$asset_name" == *"deb13"* ]]; then
                 return 0
-              elif [[ "$asset_name" == *"+deb14"* ]] || [[ "$asset_name" == *"+rolling"* ]]; then
+              elif [[ "$asset_name" == *"deb14"* ]] || [[ "$asset_name" == *"rolling"* ]]; then
                 return 1
               else
                 return 0

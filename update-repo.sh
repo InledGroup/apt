@@ -39,6 +39,25 @@ for dist in stable forky rolling; do
         aptly -config=aptly.conf repo create -comment="Inled APT Repository" -distribution="$dist" -component="$COMPONENT" "$dist_repo"
     fi
 
+    # Purge old versions that are no longer in current_assets.txt or incoming/
+    if [ -f "current_assets.txt" ] && [ -s "current_assets.txt" ]; then
+        echo "🧹 Checking for stale packages in $dist_repo against current_assets.txt..."
+        aptly -config=aptly.conf repo show -with-packages "$dist_repo" | grep -A 999999 "Packages:" | tail -n +2 | sed 's/^[[:space:]]*//' | while read -r pkg_spec; do
+            if [ -n "$pkg_spec" ]; then
+                pkg_name=$(echo "$pkg_spec" | cut -d'_' -f1)
+                pkg_version=$(echo "$pkg_spec" | cut -d'_' -f2)
+                pkg_arch=$(echo "$pkg_spec" | cut -d'_' -f3)
+                
+                filename="${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+                
+                if ! grep -Fxq "$filename" current_assets.txt && [ ! -f "incoming/$filename" ]; then
+                    echo "🗑️ Stale package $filename not found in release assets or incoming. Purging from $dist_repo..."
+                    aptly -config=aptly.conf repo remove "$dist_repo" "Name (= $pkg_name), Version (= $pkg_version), Architecture (= $pkg_arch)" || true
+                fi
+            fi
+        done
+    fi
+
     # Add matching packages from 'incoming' that belong to this distribution
     matching_debs=()
     shopt -s nullglob

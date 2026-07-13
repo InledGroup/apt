@@ -152,6 +152,9 @@ jobs:
           fi
           echo "Updating repository for distribution branch: $DISTRIBUTION"
           
+          # Fetch list of active release assets to prevent 404 references in indices and packages.json
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' --repo ${{ github.repository }} > current_assets.txt || touch current_assets.txt
+          
           ./update-repo.sh
         env:
           RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/packages
@@ -190,20 +193,25 @@ jobs:
               filename=$(basename "$file")
               if [[ "$filename" == *.deb ]]; then
                 package_base=$(echo "$filename" | sed 's/_[0-9][0-9.~+:-]*_.*//')
+                allowed_pattern="\.deb$"
               elif [[ "$filename" == *.rpm ]]; then
                 package_base=$(echo "$filename" | sed 's/-[0-9][0-9.~+:-]*.rpm$//')
+                allowed_pattern="\.rpm$"
               elif [[ "$filename" == *.pkg.tar.* ]]; then
                 package_base=$(echo "$filename" | sed 's/-[0-9][0-9.~+:-]*-.*//')
+                allowed_pattern="\.pkg\.tar\."
               else
                 continue
               fi
               echo "Processing new package: $filename (base: $package_base)"
               gh release view "$TAG" --json assets --jq '.assets[].name' --repo ${{ github.repository }} | while read asset; do
-                if [[ "$asset" == "${package_base}"_* ]] || [[ "$asset" == "${package_base}"-* ]]; then
-                  if [ "$asset" != "$filename" ] && belongs_to_dist "$asset" "$DISTRIBUTION"; then
-                    echo "  Deleting old version: $asset"
-                    gh release delete-asset "$TAG" "$asset" --repo ${{ github.repository }} --yes || true
-                    sleep 1
+                if [[ "$asset" =~ $allowed_pattern ]]; then
+                  if [[ "$asset" == "${package_base}"_* ]] || [[ "$asset" == "${package_base}"-* ]]; then
+                    if [ "$asset" != "$filename" ] && belongs_to_dist "$asset" "$DISTRIBUTION"; then
+                      echo "  Deleting old version: $asset"
+                      gh release delete-asset "$TAG" "$asset" --repo ${{ github.repository }} --yes || true
+                      sleep 1
+                    fi
                   fi
                 fi
               done

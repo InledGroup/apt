@@ -94,14 +94,36 @@ def generate_html(release_url, key_id=None):
         except:
             history = {}
 
-    # Clean up history: remove any old suffixed versions (+deb13, +deb14, +rolling)
-    # for pulsaros-* and gnome-macos-remap-wayland packages.
+    # Load current_assets.txt if it exists to get the active assets on GitHub
+    active_assets = set()
+    if os.path.exists("current_assets.txt"):
+        with open("current_assets.txt", "r") as f:
+            for line in f:
+                val = line.strip()
+                if val:
+                    active_assets.add(val)
+
+    # Also keep files from the current scan in active_assets
+    for pkg in current_pkgs:
+        active_assets.add(pkg["file"])
+
+    # Clean up history: remove versions and individual files no longer present in active_assets
     for name in list(history.keys()):
-        if name.startswith("pulsaros-") or name == "gnome-macos-remap-wayland":
-            versions_to_delete = [v for v in history[name]["versions"] if "+" in v or "deb1" in v or "rolling" in v]
-            for v in versions_to_delete:
-                print(f"Purging old historical version {v} for {name} from packages.json")
-                del history[name]["versions"][v]
+        for version in list(history[name]["versions"].keys()):
+            # Only keep package entries whose files exist in active_assets
+            history[name]["versions"][version] = [
+                pkg for pkg in history[name]["versions"][version]
+                if not active_assets or pkg["file"] in active_assets
+            ]
+            # If no entries remain for this version, delete the version
+            if not history[name]["versions"][version]:
+                print(f"Purging old historical version {version} for {name} from packages.json (no assets exist)")
+                del history[name]["versions"][version]
+        
+        # If no versions remain for this package name, delete the package entirely
+        if not history[name]["versions"]:
+            print(f"Purging package {name} from packages.json (no versions remain)")
+            del history[name]
 
     # Merge current scan into history
     current_names = set()

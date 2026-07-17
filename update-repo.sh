@@ -198,6 +198,7 @@ if [ -d "public/arch" ]; then
         if [ -f "$pkg_file.sig" ]; then
             sig_filename="$filename.sig"
             echo "/arch/$sig_filename $RELEASE_URL/$sig_filename 302" >> "$REDIRECTS_TMP"
+            cp "$pkg_file.sig" incoming/
             rm "$pkg_file.sig"
         fi
     done

@@ -192,12 +192,14 @@ if [ -d "public/arch" ]; then
         shopt -u nullglob
         if [[ "$pkg_file" == *.sig ]]; then continue; fi
         filename=$(basename "$pkg_file")
-        echo "/arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
+        # Extract arch from filename (format: name-version-pkgrel-arch.pkg.tar.zst)
+        pkg_arch=$(echo "$filename" | sed 's/.*-[0-9][0-9.]*-[0-9]*-\([^-]*\)\.pkg\.tar\..*/\1/')
+        echo "/arch/$pkg_arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
         cp "$pkg_file" incoming/
         rm "$pkg_file"
         if [ -f "$pkg_file.sig" ]; then
             sig_filename="$filename.sig"
-            echo "/arch/$sig_filename $RELEASE_URL/$sig_filename 302" >> "$REDIRECTS_TMP"
+            echo "/arch/$pkg_arch/$sig_filename $RELEASE_URL/$sig_filename 302" >> "$REDIRECTS_TMP"
             cp "$pkg_file.sig" incoming/
             rm "$pkg_file.sig"
         fi

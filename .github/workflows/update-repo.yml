@@ -233,7 +233,7 @@ jobs:
             incoming/*.rpm
             incoming/*.pkg.tar.*
             packages.json
-          overwrite: true
+          overwrite_files: true
 
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy public --project-name inled-apt --branch main

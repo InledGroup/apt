@@ -1,1 +1,651 @@
-{}
+{
+  "appinstall": {
+    "versions": {
+      "16": [
+        {
+          "name": "appinstall",
+          "version": "16",
+          "arch": "all",
+          "type": "deb",
+          "file": "appinstall_16_all.deb"
+        }
+      ]
+    }
+  },
+  "droidtux": {
+    "versions": {
+      "1.0.18": [
+        {
+          "name": "droidtux",
+          "version": "1.0.18",
+          "arch": "all",
+          "type": "deb",
+          "file": "droidtux_1.0.18_all.deb"
+        }
+      ],
+      "1.0.9": [
+        {
+          "name": "droidtux",
+          "version": "1.0.9",
+          "arch": "amd64",
+          "type": "deb",
+          "file": "droidtux_1.0.9_amd64.deb"
+        }
+      ]
+    }
+  },
+  "macboat": {
+    "versions": {
+      "2.0.7": [
+        {
+          "name": "macboat",
+          "version": "2.0.7",
+          "arch": "amd64",
+          "type": "deb",
+          "file": "macboat_2.0.7_amd64.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-bootsound": {
+    "versions": {
+      "1.0.36": [
+        {
+          "name": "pulsaros-bootsound",
+          "version": "1.0.36",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-bootsound_1.0.36_all.deb"
+        }
+      ],
+      "1.0.35+deb14": [
+        {
+          "name": "pulsaros-bootsound",
+          "version": "1.0.35+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-bootsound_1.0.35+deb14_all.deb"
+        }
+      ],
+      "1.0.36+rolling": [
+        {
+          "name": "pulsaros-bootsound",
+          "version": "1.0.36+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-bootsound_1.0.36+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-branding": {
+    "versions": {
+      "1.0.36": [
+        {
+          "name": "pulsaros-branding",
+          "version": "1.0.36",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-branding_1.0.36_all.deb"
+        }
+      ],
+      "1.0.35+deb14": [
+        {
+          "name": "pulsaros-branding",
+          "version": "1.0.35+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-branding_1.0.35+deb14_all.deb"
+        }
+      ],
+      "1.0.36+rolling": [
+        {
+          "name": "pulsaros-branding",
+          "version": "1.0.36+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-branding_1.0.36+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-calamares": {
+    "versions": {
+      "1.0.37": [
+        {
+          "name": "pulsaros-calamares",
+          "version": "1.0.37",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-calamares_1.0.37_all.deb"
+        }
+      ],
+      "1.0.36+deb14": [
+        {
+          "name": "pulsaros-calamares",
+          "version": "1.0.36+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-calamares_1.0.36+deb14_all.deb"
+        }
+      ],
+      "1.0.37+rolling": [
+        {
+          "name": "pulsaros-calamares",
+          "version": "1.0.37+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-calamares_1.0.37+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-effects-settings": {
+    "versions": {
+      "1.0.35": [
+        {
+          "name": "pulsaros-effects-settings",
+          "version": "1.0.35",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-effects-settings_1.0.35_all.deb"
+        }
+      ],
+      "1.0.34+deb14": [
+        {
+          "name": "pulsaros-effects-settings",
+          "version": "1.0.34+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-effects-settings_1.0.34+deb14_all.deb"
+        }
+      ],
+      "1.0.35+rolling": [
+        {
+          "name": "pulsaros-effects-settings",
+          "version": "1.0.35+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-effects-settings_1.0.35+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-essential": {
+    "versions": {
+      "1.0.35": [
+        {
+          "name": "pulsaros-essential",
+          "version": "1.0.35",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-essential_1.0.35_all.deb"
+        }
+      ],
+      "1.0.34+deb14": [
+        {
+          "name": "pulsaros-essential",
+          "version": "1.0.34+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-essential_1.0.34+deb14_all.deb"
+        }
+      ],
+      "1.0.35+rolling": [
+        {
+          "name": "pulsaros-essential",
+          "version": "1.0.35+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-essential_1.0.35+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-global-menu": {
+    "versions": {
+      "1.0.37": [
+        {
+          "name": "pulsaros-global-menu",
+          "version": "1.0.37",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-global-menu_1.0.37_all.deb"
+        }
+      ],
+      "1.0.36+deb14": [
+        {
+          "name": "pulsaros-global-menu",
+          "version": "1.0.36+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-global-menu_1.0.36+deb14_all.deb"
+        }
+      ],
+      "1.0.37+rolling": [
+        {
+          "name": "pulsaros-global-menu",
+          "version": "1.0.37+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-global-menu_1.0.37+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-gnome": {
+    "versions": {
+      "1.0.35": [
+        {
+          "name": "pulsaros-gnome",
+          "version": "1.0.35",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-gnome_1.0.35_all.deb"
+        }
+      ],
+      "1.0.34+deb14": [
+        {
+          "name": "pulsaros-gnome",
+          "version": "1.0.34+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-gnome_1.0.34+deb14_all.deb"
+        }
+      ],
+      "1.0.35+rolling": [
+        {
+          "name": "pulsaros-gnome",
+          "version": "1.0.35+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-gnome_1.0.35+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-grub": {
+    "versions": {
+      "1.0.31": [
+        {
+          "name": "pulsaros-grub",
+          "version": "1.0.31",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-grub_1.0.31_all.deb"
+        }
+      ],
+      "1.0.30+deb14": [
+        {
+          "name": "pulsaros-grub",
+          "version": "1.0.30+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-grub_1.0.30+deb14_all.deb"
+        }
+      ],
+      "1.0.31+rolling": [
+        {
+          "name": "pulsaros-grub",
+          "version": "1.0.31+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-grub_1.0.31+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-plymouth": {
+    "versions": {
+      "1.0.33": [
+        {
+          "name": "pulsaros-plymouth",
+          "version": "1.0.33",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-plymouth_1.0.33_all.deb"
+        }
+      ],
+      "1.0.32+deb14": [
+        {
+          "name": "pulsaros-plymouth",
+          "version": "1.0.32+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-plymouth_1.0.32+deb14_all.deb"
+        }
+      ],
+      "1.0.33+rolling": [
+        {
+          "name": "pulsaros-plymouth",
+          "version": "1.0.33+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-plymouth_1.0.33+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-recovery": {
+    "versions": {
+      "1.0.40": [
+        {
+          "name": "pulsaros-recovery",
+          "version": "1.0.40",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-recovery_1.0.40_all.deb"
+        }
+      ],
+      "1.0.39+deb14": [
+        {
+          "name": "pulsaros-recovery",
+          "version": "1.0.39+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-recovery_1.0.39+deb14_all.deb"
+        }
+      ],
+      "1.0.40+rolling": [
+        {
+          "name": "pulsaros-recovery",
+          "version": "1.0.40+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-recovery_1.0.40+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-sddm": {
+    "versions": {
+      "1.0.35": [
+        {
+          "name": "pulsaros-sddm",
+          "version": "1.0.35",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-sddm_1.0.35_all.deb"
+        }
+      ],
+      "1.0.34+deb14": [
+        {
+          "name": "pulsaros-sddm",
+          "version": "1.0.34+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-sddm_1.0.34+deb14_all.deb"
+        }
+      ],
+      "1.0.35+rolling": [
+        {
+          "name": "pulsaros-sddm",
+          "version": "1.0.35+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-sddm_1.0.35+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-spotlight-launcher": {
+    "versions": {
+      "1.0.35": [
+        {
+          "name": "pulsaros-spotlight-launcher",
+          "version": "1.0.35",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-spotlight-launcher_1.0.35_all.deb"
+        }
+      ],
+      "1.0.34+deb14": [
+        {
+          "name": "pulsaros-spotlight-launcher",
+          "version": "1.0.34+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-spotlight-launcher_1.0.34+deb14_all.deb"
+        }
+      ],
+      "1.0.35+rolling": [
+        {
+          "name": "pulsaros-spotlight-launcher",
+          "version": "1.0.35+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-spotlight-launcher_1.0.35+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-theme": {
+    "versions": {
+      "1.0.35": [
+        {
+          "name": "pulsaros-theme",
+          "version": "1.0.35",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-theme_1.0.35_all.deb"
+        }
+      ],
+      "1.0.34+deb14": [
+        {
+          "name": "pulsaros-theme",
+          "version": "1.0.34+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-theme_1.0.34+deb14_all.deb"
+        }
+      ],
+      "1.0.35+rolling": [
+        {
+          "name": "pulsaros-theme",
+          "version": "1.0.35+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-theme_1.0.35+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-welcome": {
+    "versions": {
+      "1.0.35": [
+        {
+          "name": "pulsaros-welcome",
+          "version": "1.0.35",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-welcome_1.0.35_all.deb"
+        }
+      ],
+      "1.0.34+deb14": [
+        {
+          "name": "pulsaros-welcome",
+          "version": "1.0.34+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-welcome_1.0.34+deb14_all.deb"
+        }
+      ],
+      "1.0.35+rolling": [
+        {
+          "name": "pulsaros-welcome",
+          "version": "1.0.35+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-welcome_1.0.35+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "seafari": {
+    "versions": {
+      "1.11.14": [
+        {
+          "name": "seafari",
+          "version": "1.11.14",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "seafari_1.11.14_amd64.deb"
+        },
+        {
+          "name": "seafari",
+          "version": "1.11.14",
+          "arch": "arm64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "seafari_1.11.14_arm64.deb"
+        }
+      ]
+    }
+  },
+  "spotlight-python": {
+    "versions": {
+      "1.0.1": [
+        {
+          "name": "spotlight-python",
+          "version": "1.0.1",
+          "arch": "all",
+          "type": "deb",
+          "file": "spotlight-python_1.0.1_all.deb"
+        }
+      ]
+    }
+  },
+  "gnome-macos-remap-wayland": {
+    "versions": {
+      "1.0.3": [
+        {
+          "name": "gnome-macos-remap-wayland",
+          "version": "1.0.3",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "gnome-macos-remap-wayland_1.0.3_all.deb"
+        }
+      ],
+      "1.0.2+deb14": [
+        {
+          "name": "gnome-macos-remap-wayland",
+          "version": "1.0.2+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "gnome-macos-remap-wayland_1.0.2+deb14_all.deb"
+        }
+      ],
+      "1.0.3+rolling": [
+        {
+          "name": "gnome-macos-remap-wayland",
+          "version": "1.0.3+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "gnome-macos-remap-wayland_1.0.3+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-refind": {
+    "versions": {
+      "1.0.34": [
+        {
+          "name": "pulsaros-refind",
+          "version": "1.0.34",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-refind_1.0.34_all.deb"
+        }
+      ],
+      "1.0.33+deb14": [
+        {
+          "name": "pulsaros-refind",
+          "version": "1.0.33+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-refind_1.0.33+deb14_all.deb"
+        }
+      ],
+      "1.0.34+rolling": [
+        {
+          "name": "pulsaros-refind",
+          "version": "1.0.34+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-refind_1.0.34+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "vozes": {
+    "versions": {
+      "1.6.7": [
+        {
+          "name": "vozes",
+          "version": "1.6.7",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "vozes_1.6.7_amd64.deb"
+        },
+        {
+          "name": "vozes",
+          "version": "1.6.7",
+          "arch": "arm64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "vozes_1.6.7_arm64.deb"
+        }
+      ]
+    }
+  }
+}

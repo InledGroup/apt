@@ -141,11 +141,20 @@ def generate_html(release_url, key_id=None):
         if not exists:
             history[name]["versions"][version].append(pkg)
 
-    # Remove packages no longer present in any scan
+    # Remove packages no longer present in any scan AND with no active assets in GitHub releases
     for name in list(history.keys()):
         if name not in current_names:
-            del history[name]
-            print(f"Removed stale package from history: {name}")
+            # Check if any version of this package still has a file in active_assets
+            has_active_asset = any(
+                pkg["file"] in active_assets
+                for version_pkgs in history[name]["versions"].values()
+                for pkg in version_pkgs
+            )
+            if has_active_asset:
+                print(f"Keeping package {name} in history (not in aptly but has active release assets)")
+            else:
+                del history[name]
+                print(f"Removed stale package from history: {name}")
 
     with open(db_file, "w") as f:
         json.dump(history, f, indent=2)

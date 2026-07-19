@@ -49,10 +49,8 @@ PKGS_TO_ADD=()
 for pkg in "$ARCH_DIR"/*.pkg.tar.*; do
     if [[ "$pkg" == *.sig ]]; then continue; fi
     echo "Processing package: $pkg"
-    if [ ! -f "$pkg.sig" ]; then
-        echo "Signing package $pkg..."
-        gpg --batch --yes --detach-sign --default-key "$GPG_FINGERPRINT" "$pkg"
-    fi
+    echo "Signing package $pkg with current GPG key..."
+    gpg --batch --yes --detach-sign --default-key "$GPG_FINGERPRINT" "$pkg"
     PKGS_TO_ADD+=("$pkg")
 done
 

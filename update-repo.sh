@@ -192,19 +192,30 @@ if [ -d "public/arch" ]; then
         shopt -u nullglob
         if [[ "$pkg_file" == *.sig ]]; then continue; fi
         filename=$(basename "$pkg_file")
-        # Extract arch from filename (format: name-version-pkgrel-arch.pkg.tar.zst)
-        pkg_arch=$(echo "$filename" | sed 's/.*-[0-9][0-9.]*-[0-9]*-\([^-]*\)\.pkg\.tar\..*/\1/')
-        echo "/arch/$pkg_arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
+        echo "/arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
         cp "$pkg_file" incoming/
         rm "$pkg_file"
         if [ -f "$pkg_file.sig" ]; then
             sig_filename="$filename.sig"
-            echo "/arch/$pkg_arch/$sig_filename $RELEASE_URL/$sig_filename 302" >> "$REDIRECTS_TMP"
+            echo "/arch/$sig_filename $RELEASE_URL/$sig_filename 302" >> "$REDIRECTS_TMP"
             cp "$pkg_file.sig" incoming/
             rm "$pkg_file.sig"
         fi
     done
     shopt -u nullglob
+fi
+
+# Generate redirects for arch packages in current_assets.txt that weren't downloaded this run
+# (e.g. large files that timed out during gh release download)
+if [ -f "current_assets.txt" ]; then
+    while IFS= read -r asset; do
+        if [[ "$asset" == *.pkg.tar.* ]] && [[ "$asset" != *.sig ]]; then
+            echo "/arch/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
+        fi
+        if [[ "$asset" == *.pkg.tar.*.sig ]]; then
+            echo "/arch/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
+        fi
+    done < current_assets.txt
 fi
 
 # Deduplicate and atomically write _redirects

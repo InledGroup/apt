@@ -179,7 +179,6 @@ if [ -d "public/rpm" ]; then
         filename=$(basename "$rpm_file")
         echo "/rpm/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
         cp "$rpm_file" incoming/
-        rm "$rpm_file"
     done
     shopt -u nullglob
 fi
@@ -196,12 +195,10 @@ if [ -d "public/arch" ]; then
         pkg_arch=$(echo "$filename" | sed 's/.*-[0-9][0-9.]*-[0-9]*-\([^-]*\)\.pkg\.tar\..*/\1/')
         echo "/arch/$pkg_arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
         cp "$pkg_file" incoming/
-        rm "$pkg_file"
         if [ -f "$pkg_file.sig" ]; then
             sig_filename="$filename.sig"
             echo "/arch/$pkg_arch/$sig_filename $RELEASE_URL/$sig_filename 302" >> "$REDIRECTS_TMP"
             cp "$pkg_file.sig" incoming/
-            rm "$pkg_file.sig"
         fi
     done
     shopt -u nullglob

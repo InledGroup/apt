@@ -64,6 +64,9 @@ jobs:
             echo "Aptly database cache is present. Downloading packages.json only..."
             gh release download packages --pattern "packages.json" --dir . --repo ${{ github.repository }} --clobber || echo "No previous packages.json"
           fi
+          # Always sync arch and rpm packages into public/ for cache persistence
+          gh release download packages --pattern "*.pkg.tar.zst" --pattern "*.pkg.tar.zst.sig" --dir public/arch --repo ${{ github.repository }} --clobber 2>/dev/null || echo "No arch packages in release yet"
+          gh release download packages --pattern "*.rpm" --dir public/rpm --repo ${{ github.repository }} --clobber 2>/dev/null || echo "No rpm packages in release yet"
         env:
           GH_TOKEN: ${{ github.token }}
 

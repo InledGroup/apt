@@ -322,7 +322,7 @@ sudo pacman -Sy</code></pre>
                 let currentSearch = '';
 
                 function getBranchForVersion(pkg) {
-                    if (pkg.type !== 'deb') return 'other';
+                    if (pkg.type !== 'deb') return pkg.type; // 'rpm', 'arch', etc. each get their own slot
                     return pkg.branch || 'stable';
                 }
 

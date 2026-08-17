@@ -235,6 +235,38 @@ jobs:
             packages.json
           overwrite_files: true
 
+      - name: Save package list for Discord notification
+        run: |
+          echo "📦 **Packages updated on apt.inled.es**" > /tmp/pkg-summary.txt
+          echo "" >> /tmp/pkg-summary.txt
+          for f in incoming/*.deb incoming/*.rpm incoming/*.pkg.tar.zst; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            # Extract name and version from filename
+            if [[ "$base" == *.deb ]]; then
+              name=$(echo "$base" | sed 's/_[0-9].*//')
+              ver=$(echo "$base" | sed 's/.*_//;s/_.*//')
+              echo "- \`${name}\` \`${ver}\`" >> /tmp/pkg-summary.txt
+            elif [[ "$base" == *.rpm ]]; then
+              name=$(echo "$base" | sed 's/-[0-9].*//')
+              ver=$(echo "$base" | sed 's/.*-//;s/\.rpm$//')
+              echo "- \`${name}\` \`${ver}\`" >> /tmp/pkg-summary.txt
+            elif [[ "$base" == *.pkg.tar.zst ]] && [[ "$base" != *.sig ]]; then
+              name=$(echo "$base" | sed 's/-[0-9].*//')
+              ver=$(echo "$base" | sed 's/.*-//;s/-.*//')
+              echo "- \`${name}\` \`${ver}\`" >> /tmp/pkg-summary.txt
+            fi
+          done
+          echo "" >> /tmp/pkg-summary.txt
+          echo "<https://apt.inled.es>" >> /tmp/pkg-summary.txt
+
+      - name: Upload package summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-summary
+          path: /tmp/pkg-summary.txt
+          retention-days: 1
+
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy public --project-name inled-apt --branch main
         env:

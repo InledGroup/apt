@@ -11,18 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     steps:
+      - name: Download package summary
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: package-summary
+          path: /tmp
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
       - name: Notify Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          BRANCH: ${{ github.ref_name }}
-          STATUS: ${{ github.event.workflow_run.conclusion }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
         run: |
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            MSG="📦 **Manual package sync triggered**\n<https://apt.inled.es>"
+          if [ -f /tmp/pkg-summary.txt ]; then
+            MSG=$(cat /tmp/pkg-summary.txt)
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MSG=$(echo -e "📦 **Manual package sync triggered**\n<https://apt.inled.es>")
           else
-            MSG="📦 **Package(s) uploaded to apt.inled.es**\nStatus: \`$STATUS\`\n<$RUN_URL>\n<https://apt.inled.es>"
+            MSG=$(echo -e "📦 **Package(s) uploaded to apt.inled.es**\n<$RUN_URL>\n<https://apt.inled.es>")
           fi
-          curl -s -X POST "$DISCORD_WEBHOOK" \
-            -H "Content-Type: application/json" \
-            -d "{\"content\":\"$MSG\"}"
+          jq -n --arg msg "$MSG" '{"content": $msg}' | \
+            curl -s -X POST "$DISCORD_WEBHOOK" -H "Content-Type: application/json" -d @-

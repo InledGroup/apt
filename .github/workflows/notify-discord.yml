@@ -1,0 +1,23 @@
+name: Notify Discord
+
+on:
+  workflow_run:
+    workflows: ["Update Repositories"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Send Discord notification for package upload
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: |
+            📦 **New package(s) uploaded to apt.inled.es**
+            Branch: `{{github.ref_name}}`
+            Triggered by: `{{github.event.workflow_run.event}}`
+            <https://apt.inled.es>

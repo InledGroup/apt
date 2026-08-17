@@ -11,13 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     steps:
-      - name: Send Discord notification for package upload
-        uses: Ilshidur/action-discord@master
+      - name: Notify Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: |
-            📦 **New package(s) uploaded to apt.inled.es**
-            Branch: `{{github.ref_name}}`
-            Triggered by: `{{github.event.workflow_run.event}}`
-            <https://apt.inled.es>
+          BRANCH: ${{ github.ref_name }}
+          STATUS: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            MSG="📦 **Manual package sync triggered**\n<https://apt.inled.es>"
+          else
+            MSG="📦 **Package(s) uploaded to apt.inled.es**\nStatus: \`$STATUS\`\n<$RUN_URL>\n<https://apt.inled.es>"
+          fi
+          curl -s -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{\"content\":\"$MSG\"}"

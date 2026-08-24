@@ -75,6 +75,14 @@ def version_key(version_str):
     except:
         return (0,)
 
+LUCIDE_DOWNLOAD_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" '
+    'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+    'stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>'
+    '<polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>'
+)
+
 def generate_html(release_url, key_id=None):
     apt_pkgs = get_apt_packages("inled-repo")
     apt_pkgs += get_apt_packages("inled-repo-forky")
@@ -194,7 +202,11 @@ def generate_html(release_url, key_id=None):
                 arch_info = f' ({pkg["arch"]})' if pkg["arch"] != "unknown" else ""
                 ver_info = f' v{pkg["version"]}' if pkg["version"] != latest_overall_ver else ""
                 full_label = f"{pkg['type']}{arch_info}{ver_info}"
-                item_html += f'<a href="{release_url}/{pkg["file"]}" class="btn btn-sm btn-{pkg["type"]}">{full_label}</a>'
+                item_html += (
+                    f'<a href="{release_url}/{pkg["file"]}" class="btn btn-sm btn-{pkg["type"]}" '
+                    f'title="Download {full_label}" aria-label="Download {name} {full_label}">'
+                    f'{LUCIDE_DOWNLOAD_SVG}</a>'
+                )
 
             item_html += f'</div></li>'
             packages_html += item_html
@@ -210,6 +222,7 @@ def generate_html(release_url, key_id=None):
     final_html = final_html.replace("<!-- RELEASE_URL_PLACEHOLDER -->", release_url)
     if key_id:
         final_html = final_html.replace("<KEY_ID>", key_id)
+        final_html = final_html.replace("&lt;KEY_ID&gt;", key_id)
 
     os.makedirs("public", exist_ok=True)
     tmp = tempfile.NamedTemporaryFile(mode="w", dir="public", delete=False, suffix=".html")

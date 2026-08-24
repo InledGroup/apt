@@ -33,5 +33,34 @@ jobs:
           else
             MSG=$(echo -e "📦 **Package(s) uploaded to apt.inled.es**\n<$RUN_URL>\n<https://apt.inled.es>")
           fi
-          jq -n --arg msg "$MSG" '{"content": $msg}' | \
-            curl -s -X POST "$DISCORD_WEBHOOK" -H "Content-Type: application/json" -d @-
+
+          # Discord rejects messages over 2000 chars, so send the message
+          # in chunks of complete lines below that limit.
+          MAX_LEN=1900
+
+          send_chunk() {
+            jq -n --arg content "$1" '{"content": $content}' | \
+              curl -sf -X POST "$DISCORD_WEBHOOK" -H "Content-Type: application/json" -d @- \
+              || echo "::warning::Failed to send a Discord message chunk"
+          }
+
+          CHUNK=""
+          while IFS= read -r line || [ -n "$line" ]; do
+            # Flush current chunk if adding this line would exceed the limit
+            if [ -n "$CHUNK" ] && [ $(( ${#CHUNK} + ${#line} + 1 )) -gt $MAX_LEN ]; then
+              send_chunk "$CHUNK"
+              CHUNK=""
+            fi
+            # Split lines that are individually longer than the limit
+            while [ ${#line} -gt $MAX_LEN ]; do
+              send_chunk "${line:0:$MAX_LEN}"
+              line="${line:$MAX_LEN}"
+            done
+            if [ -z "$CHUNK" ]; then
+              CHUNK="$line"
+            else
+              CHUNK="$CHUNK"$'\n'"$line"
+            fi
+          done <<< "$MSG"
+
+          [ -n "$CHUNK" ] && send_chunk "$CHUNK"

@@ -60,6 +60,30 @@
             position: relative;
         }
         code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .copy-btn.copied {
+            color: #006644;
+            border-color: #006644;
+            background: #e3fcef;
+        }
         
         .package-list {
             list-style: none;
@@ -72,7 +96,7 @@
             background: var(--code-bg);
             padding: 20px;
             border-radius: 8px;
-            border-left: 4px solid var(--primary);
+            border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -107,17 +131,32 @@
             flex-wrap: wrap;
             gap: 8px;
         }
+        /* Icon-only download button (Lucide 'download' icon) */
         .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            display: flex;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            padding: 0;
+            display: inline-flex;
             align-items: center;
-            gap: 5px;
-            width: auto;
-            flex: 1 1 auto;
             justify-content: center;
-            min-width: 80px;
+            border-radius: 8px;
+            background: none;
+            color: var(--text-muted);
+            opacity: 0;
+            transition:
+                opacity 0.18s ease,
+                transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                color 0.15s;
         }
+        .btn-sm svg { display: block; }
+
+        /* Static fallback buttons (package footer, no version row) */
+        .package-footer > .btn-sm {
+            opacity: 0;
+        }
+        .package-footer:hover > .btn-sm,
+        .package-footer:focus-within > .btn-sm { opacity: 1; }
 
         .btn-deb { background: #d70a53; }
         .btn-rpm { background: #3c6eb4; }
@@ -125,6 +164,81 @@
         .btn-deb:hover { background: #a50740; }
         .btn-rpm:hover { background: #2e558a; }
         .btn-arch:hover { background: #1275a7; }
+
+        /* Icon buttons never get a colored background */
+        a.btn-sm {
+            text-decoration: none;
+        }
+        a.btn-sm.btn-deb, a.btn-sm.btn-rpm, a.btn-sm.btn-arch,
+        a.btn-sm.btn-deb:hover, a.btn-sm.btn-rpm:hover, a.btn-sm.btn-arch:hover,
+        .package-ver-row .btn-sm:hover {
+            background: none;
+        }
+        a.btn-sm:hover, a.btn-sm:focus-visible,
+        .package-ver-row .btn-sm:hover {
+            color: var(--primary);
+        }
+
+        /* ---- Version row hover effect ----
+           A blue fill sweeps up from the bottom covering the version text,
+           while a plain white download icon follows the cursor
+           with a spring entrance. */
+        .package-ver-row {
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .package-ver-row::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: var(--primary);
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.28s ease;
+            z-index: 1;
+        }
+        .package-ver-row:hover::before,
+        .package-ver-row:focus-within::before {
+            transform: scaleY(1);
+        }
+        .package-ver-label {
+            position: relative;
+            z-index: 0;
+        }
+        .package-ver-row a.btn-sm {
+            position: absolute;
+            left: var(--icon-x, calc(100% - 22px));
+            top: var(--icon-y, 50%);
+            transform: translate(-50%, -50%) scale(0.3);
+            width: 30px;
+            height: 30px;
+            min-width: 30px;
+            color: #fff;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 2;
+        }
+        .package-ver-row:hover a.btn-sm,
+        .package-ver-row:focus-within a.btn-sm {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .package-ver-row:active a.btn-sm {
+            transform: translate(-50%, -50%) scale(0.85);
+        }
+
+        @media (hover: none) {
+            /* Touch devices: no cursor to follow, pin the chip to the right */
+            .package-footer > .btn-sm { opacity: 1; }
+            .package-ver-row a.btn-sm {
+                opacity: 1;
+                left: auto;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+        }
 
         .btn {
             display: inline-block;
@@ -149,6 +263,7 @@
         }
         .alert-info { background: #deebff; color: #0747a6; border: 1px solid #b3d4ff; }
         .alert-warning { background: #fffae6; color: #826a00; border: 1px solid #fff0b3; }
+        .page-alert { margin-bottom: 30px; }
         
         /* Branch selector tabs */
         .branch-selector {
@@ -184,6 +299,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
             background: var(--bg);
             padding: 8px 12px;
             border-radius: 6px;
@@ -194,6 +311,13 @@
         .package-ver-row:hover {
             transform: translateY(-1px);
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .package-ver-label {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            flex: 1 1 auto;
+            overflow: hidden;
         }
         
         .badge {
@@ -223,8 +347,7 @@
             .container { margin: 20px auto; }
             h1 { font-size: 1.8rem; }
             .package-list { grid-template-columns: 1fr; }
-            .package-ver-row { flex-direction: column; align-items: stretch; gap: 8px; }
-            .package-ver-row .btn-sm { width: 100%; }
+            .package-ver-row { flex-direction: column; align-items: flex-start; gap: 8px; }
         }
     </style>
 </head>
@@ -234,6 +357,12 @@
             <img src="https://hosted.inled.es/inled-logo-full.png" alt="Inled Logo" class="logo">
             <p class="description">Official package repository for Inled applications.</p>
         </header>
+
+        <div class="alert alert-warning page-alert">
+            <strong>Are you in Spain?</strong><br>
+            Due to the current internet censorship measures in Spain, access to this repository may be restricted by your provider.
+            We recommend using <a href="https://protonvpn.com/" target="_blank" rel="noopener">ProtonVPN</a> to bypass censorship and access this repository without restrictions.
+        </div>
 
         <section class="card">
             <h2>How to use this repository</h2>
@@ -248,14 +377,14 @@ echo "deb [signed-by=/usr/share/keyrings/inled-archive-keyring.gpg] https://apt.
 # 3. Update and install
 sudo apt update</code></pre>
 
-            <div class="alert alert-warning">
+        <div class="alert alert-warning">
                 <strong>Issues with apt update?</strong><br>
                 If you get "malformed line" or "NOSPLIT" errors, verify that <code>/etc/apt/sources.list.d/inled.list</code> contains a single line and does not end with a trailing slash after <code>stable main</code>.
             </div>
 
             <h3>Fedora / RHEL / CentOS (DNF/YUM)</h3>
             <pre><code># Create the config file
-sudo tee /etc/yum.repos.d/inled.repo <<EOF
+sudo tee /etc/yum.repos.d/inled.repo &lt;&lt;EOF
 [inled]
 name=Inled Repository
 baseurl=https://apt.inled.es/rpm/
@@ -269,17 +398,24 @@ EOF
 sudo dnf install &lt;package&gt;</code></pre>
 
             <h3>Arch Linux (Pacman)</h3>
-            <pre><code># 1. Add to the end of /etc/pacman.conf
+            <pre><code># 1. Add the repository to /etc/pacman.conf
+#    (appends the block below automatically; skips if it already exists)
+grep -q '^\[inled\]' /etc/pacman.conf || sudo tee -a /etc/pacman.conf &lt;&lt;EOF
+
 [inled]
 SigLevel = PackageRequired
 Server = https://apt.inled.es/arch/
+EOF
 
 # 2. Import and sign the GPG key
 curl -s https://apt.inled.es/archive.key | sudo pacman-key -a -
-sudo pacman-key --lsign-key <KEY_ID>
+sudo pacman-key --lsign-key &lt;KEY_ID&gt;
 
-# 3. Update and install
-sudo pacman -Sy</code></pre>
+# 3. Update the package database
+sudo pacman -Sy
+
+# 4. Install any package from the repository
+sudo pacman -S &lt;package&gt;</code></pre>
 
             <div class="alert alert-info">
                 <strong>Key missing after reboot?</strong><br>
@@ -320,6 +456,9 @@ sudo pacman -Sy</code></pre>
 
                 let currentBranch = 'all';
                 let currentSearch = '';
+
+                // Lucide 'download' icon
+                const DOWNLOAD_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>';
 
                 function getBranchForVersion(pkg) {
                     if (pkg.type !== 'deb') return pkg.type; // 'rpm', 'arch', etc. each get their own slot
@@ -429,8 +568,7 @@ sudo pacman -Sy</code></pre>
                             row.className = 'package-ver-row';
 
                             const label = document.createElement('div');
-                            label.style.display = 'flex';
-                            label.style.alignItems = 'center';
+                            label.className = 'package-ver-label';
                             
                             const badge = pkg.type === 'deb' ? getBranchBadgeHtml(branch) : `<span class="badge badge-other">${pkg.type}</span>`;
                             
@@ -439,8 +577,22 @@ sudo pacman -Sy</code></pre>
                             const link = document.createElement('a');
                             link.href = `${window.releaseUrl}/${pkg.file}`;
                             link.className = `btn btn-sm btn-${pkg.type}`;
-                            link.textContent = 'Download';
-                            
+                            link.innerHTML = DOWNLOAD_ICON;
+                            link.title = `Download ${pkg.type} v${pkg.version}`;
+                            link.setAttribute('aria-label', `Download ${name} ${pkg.type} v${pkg.version}`);
+
+                            // The icon follows the cursor while it stays inside the row
+                            row.addEventListener('mousemove', function(e) {
+                                const rect = row.getBoundingClientRect();
+                                row.style.setProperty('--icon-x', `${e.clientX - rect.left}px`);
+                                row.style.setProperty('--icon-y', `${e.clientY - rect.top}px`);
+                            });
+
+                            // The whole row is clickable (the icon itself ignores the pointer)
+                            row.addEventListener('click', function() {
+                                window.location.href = link.href;
+                            });
+							
                             row.appendChild(label);
                             row.appendChild(link);
                             footer.appendChild(row);
@@ -475,10 +627,57 @@ sudo pacman -Sy</code></pre>
             })();
         </script>
 
+        <script>
+            (function() {
+                document.querySelectorAll('pre').forEach(function(pre) {
+                    var code = pre.querySelector('code');
+                    if (!code) return;
+
+                    // Wrap the block so the button stays fixed while the code scrolls
+                    var wrapper = document.createElement('div');
+                    wrapper.style.position = 'relative';
+                    pre.parentNode.insertBefore(wrapper, pre);
+                    wrapper.appendChild(pre);
+
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'copy-btn';
+                    btn.textContent = 'Copy';
+
+                    btn.addEventListener('click', function() {
+                        var text = code.innerText;
+                        function done() {
+                            btn.textContent = 'Copied!';
+                            btn.classList.add('copied');
+                            setTimeout(function() {
+                                btn.textContent = 'Copy';
+                                btn.classList.remove('copied');
+                            }, 2000);
+                        }
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(text).then(done);
+                        } else {
+                            var ta = document.createElement('textarea');
+                            ta.value = text;
+                            ta.style.position = 'fixed';
+                            ta.style.opacity = '0';
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            done();
+                        }
+                    });
+
+                    wrapper.appendChild(btn);
+                });
+            })();
+        </script>
+
         <section class="card">
             <h2>Developers</h2>
-            <p>Learn how to integrate this repository into your CI/CD pipeline and deploy apps automatically.</p>
-            <a href="/skills/inled-repo-support.md" class="btn">Gemini CLI Skill</a>
+            <p>This repository, its packages and its CI/CD resources are intended for <strong>Inled internal use only</strong>.</p>
+            <p>Maintainers can read the <a href="/skills/inled-repo-support.md">AI agent instructions (Markdown)</a> to integrate applications with this repository.</p>
         </section>
 
         <footer>

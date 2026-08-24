@@ -112,6 +112,10 @@ jobs:
           CLIENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |
           mkdir -p incoming
+          # Snapshot of incoming/ before this run's downloads, so we can tell
+          # apart genuinely new packages from leftovers of previous steps
+          find incoming -maxdepth 1 -type f | sort > /tmp/incoming-before.txt
+
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
             echo "Processing dispatch payload..."
             PAYLOAD_OBJ=$(echo "$CLIENT_PAYLOAD" | jq 'if type == "string" then fromjson else . end')
@@ -140,6 +144,11 @@ jobs:
             echo "Downloading $URL..."
             wget -q "$URL" -O "incoming/$FILENAME"
           fi
+
+          # Only the files added by this trigger are "new" (Discord summary)
+          find incoming -maxdepth 1 -type f | sort > /tmp/incoming-after.txt
+          comm -13 /tmp/incoming-before.txt /tmp/incoming-after.txt > /tmp/new-packages.txt || true
+          echo "New packages detected: $(wc -l < /tmp/new-packages.txt)"
 
       - name: Update repository
         run: |
@@ -237,26 +246,45 @@ jobs:
 
       - name: Save package list for Discord notification
         run: |
-          echo "📦 **Packages updated on apt.inled.es**" > /tmp/pkg-summary.txt
-          echo "" >> /tmp/pkg-summary.txt
-          for f in incoming/*.deb incoming/*.rpm incoming/*.pkg.tar.zst; do
-            [ -f "$f" ] || continue
-            base=$(basename "$f")
-            # Extract name and version from filename
+          extract_meta() {
+            local base name ver
+            base=$(basename "$1")
             if [[ "$base" == *.deb ]]; then
-              name=$(echo "$base" | sed 's/_[0-9].*//')
-              ver=$(echo "$base" | sed 's/.*_//;s/_.*//')
-              echo "- \`${name}\` \`${ver}\`" >> /tmp/pkg-summary.txt
+              # name_version_arch.deb
+              name=${base%%_*}
+              ver=$(echo "$base" | cut -d_ -f2)
             elif [[ "$base" == *.rpm ]]; then
-              name=$(echo "$base" | sed 's/-[0-9].*//')
-              ver=$(echo "$base" | sed 's/.*-//;s/\.rpm$//')
-              echo "- \`${name}\` \`${ver}\`" >> /tmp/pkg-summary.txt
-            elif [[ "$base" == *.pkg.tar.zst ]] && [[ "$base" != *.sig ]]; then
-              name=$(echo "$base" | sed 's/-[0-9].*//')
-              ver=$(echo "$base" | sed 's/.*-//;s/-.*//')
-              echo "- \`${name}\` \`${ver}\`" >> /tmp/pkg-summary.txt
+              # name-version-release.arch.rpm (name may contain '-')
+              local nv=${base%.rpm}
+              local nv2=${nv%-*}
+              name=${nv2%-*}
+              ver=${nv2##*-}
+            else
+              # name-version-pkgrel-arch.pkg.tar.* (name may contain '-')
+              local core=${base%%.pkg.tar.*}
+              local core2=${core%-*}
+              local core3=${core2%-*}
+              name=${core3%%-*}
+              ver=${core3##*-}
             fi
-          done
+            echo "- \`${name}\` \`${ver}\`"
+          }
+
+          if [ -s /tmp/new-packages.txt ]; then
+            # List only the packages received in this trigger's request
+            echo "📦 **New packages on apt.inled.es**" > /tmp/pkg-summary.txt
+            echo "" >> /tmp/pkg-summary.txt
+            while IFS= read -r f; do
+              [ -f "$f" ] || continue
+              case "$f" in
+                *.sig) continue ;;
+              esac
+              extract_meta "$f" >> /tmp/pkg-summary.txt
+            done < /tmp/new-packages.txt
+          else
+            # No new packages in this run (metadata update, rebuild, etc.)
+            echo "🔄 **Repository metadata updated**" > /tmp/pkg-summary.txt
+          fi
           echo "" >> /tmp/pkg-summary.txt
           echo "<https://apt.inled.es>" >> /tmp/pkg-summary.txt
 

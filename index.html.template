@@ -677,7 +677,7 @@ sudo pacman -S &lt;package&gt;</code></pre>
 
         <section class="card">
             <h2>Developers</h2>
-            <p>This repository, its packages and its CI/CD resources are intended for <strong>Inled internal use only</strong>.</p>
+            <p>This repository host the packages of Inled Group.</p>
             <p>Maintainers can read the <a href="/skills/inled-repo-support.md">AI agent instructions (Markdown)</a> to integrate applications with this repository.</p>
         </section>
 

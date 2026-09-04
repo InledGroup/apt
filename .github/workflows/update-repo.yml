@@ -156,6 +156,7 @@ jobs:
             incoming/*.deb
             incoming/*.rpm
             incoming/*.pkg.tar.*
+            incoming/*.sig
             packages.json
           overwrite_files: true
 

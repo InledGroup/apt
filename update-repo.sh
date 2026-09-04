@@ -180,6 +180,9 @@ if [ -f "current_assets.txt" ]; then
             echo "/rpm/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
         elif [[ "$asset" == *.pkg.tar.* ]]; then
             echo "/arch/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
+            if [[ "$asset" != *.sig ]]; then
+                echo "/arch/$asset.sig $RELEASE_URL/$asset.sig 302" >> "$REDIRECTS_TMP"
+            fi
         fi
     done < current_assets.txt
 fi
@@ -192,12 +195,21 @@ done
 for pkg_file in incoming/*.pkg.tar.*; do
     filename=$(basename "$pkg_file")
     echo "/arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
+    if [[ "$filename" != *.sig ]]; then
+        echo "/arch/$filename.sig $RELEASE_URL/$filename.sig 302" >> "$REDIRECTS_TMP"
+    fi
 done
 shopt -u nullglob
 
-# Deduplicate and atomically write _redirects
+# Deduplicate and sort redirects
 sort -u "$REDIRECTS_TMP" > "$REDIRECTS_FILE"
 rm -f "$REDIRECTS_TMP"
+
+# Append wildcard fallback redirects (for any direct or subpath asset requests not explicitly listed)
+if [ -n "$RELEASE_URL" ]; then
+    echo "/rpm/* $RELEASE_URL/:splat 302" >> "$REDIRECTS_FILE"
+    echo "/arch/* $RELEASE_URL/:splat 302" >> "$REDIRECTS_FILE"
+fi
 
 # Create _headers for Cloudflare Pages
 cat <<EOF > public/_headers

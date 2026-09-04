@@ -149,16 +149,25 @@ jobs:
           RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/packages
 
       - name: Upload new packages to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: packages
-          files: |
-            incoming/*.deb
-            incoming/*.rpm
-            incoming/*.pkg.tar.*
-            incoming/*.sig
-            packages.json
-          overwrite_files: true
+        run: |
+          shopt -s nullglob
+          files_to_upload=()
+          if [ -s /tmp/new-packages.txt ]; then
+            while IFS= read -r f; do
+              [ -f "$f" ] && files_to_upload+=("$f")
+              [ -f "$f.sig" ] && files_to_upload+=("$f.sig")
+            done < /tmp/new-packages.txt
+          fi
+          [ -f "packages.json" ] && files_to_upload+=("packages.json")
+          
+          if [ ${#files_to_upload[@]} -gt 0 ]; then
+            echo "Uploading ${#files_to_upload[@]} files to GitHub Release..."
+            gh release upload packages "${files_to_upload[@]}" --clobber --repo ${{ github.repository }}
+          else
+            echo "No new packages to upload to release (packages.json up to date)."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Save package list for Discord notification
         run: |

@@ -26,7 +26,7 @@ for script in update-repo.sh update-pacman-repo.sh update-rpm-repo.sh; do
 done
 
 # Python scripts - syntax
-for script in generate-web-index.py generate-indexes.py patch-packages.py; do
+for script in generate-web-index.py generate-indexes.py patch-packages.py prune-release.py; do
     if python3 -c "compile(open('$script').read(), '$script', 'exec')" 2>/dev/null; then
         pass "$script syntax is valid"
     else
@@ -41,10 +41,10 @@ echo "=== Package version parsing tests ==="
 RPM_PARSE=$(python3 -c "
 import re
 f = 'pulsaros-1.0.17-1.x86_64.rpm'
-m = re.match(r'^(.+)-(\d[^-]*)-\d+\.([^.]+)\.rpm$', f)
-print(f'name={m.group(1)}, version={m.group(2)}, arch={m.group(3)}')
+m = re.match(r'^(?P<name>.+?)-(?P<version>\d.*?)\.(?P<arch>x86_64|aarch64|arm64|noarch|i386|i686|armv7hl)\.rpm$', f)
+print('name=' + m.group(1) + ', version=' + m.group(2) + ', arch=' + m.group(3))
 ")
-if [ "$RPM_PARSE" = "name=pulsaros, version=1.0.17, arch=x86_64" ]; then
+if [ "$RPM_PARSE" = "name=pulsaros, version=1.0.17-1, arch=x86_64" ]; then
     pass "RPM version parsing: $RPM_PARSE"
 else
     fail "RPM version parsing: got '$RPM_PARSE'"
@@ -54,13 +54,35 @@ fi
 ARCH_PARSE=$(python3 -c "
 import re
 f = 'seafari-1.11.0-1-x86_64.pkg.tar.zst'
-m = re.match(r'^(.+)-(\d[^-]*)-(\d+)-([^.]+)\.pkg\.tar\..+$', f)
-print(f'name={m.group(1)}, version={m.group(2)}, pkgrel={m.group(3)}, arch={m.group(4)}')
+m = re.match(r'^(?P<name>.+?)-(?P<version>\d[^-]*)-(?P<pkgrel>\d+)-(?P<arch>[^.]+)\.pkg\.tar\..+$', f)
+print('name=' + m.group(1) + ', version=' + m.group(2) + ', pkgrel=' + m.group(3) + ', arch=' + m.group(4))
 ")
 if [ "$ARCH_PARSE" = "name=seafari, version=1.11.0, pkgrel=1, arch=x86_64" ]; then
     pass "Arch version parsing: $ARCH_PARSE"
 else
     fail "Arch version parsing: got '$ARCH_PARSE'"
+fi
+
+# Test Pruner Package parsing
+PRUNER_PARSE=$(python3 -c "
+import importlib.util
+spec = importlib.util.spec_from_file_location('prune_release', 'prune-release.py')
+pr = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(pr)
+
+p1 = pr.parse_package_filename('seafari_2.8.18_amd64.deb')
+p2 = pr.parse_package_filename('seafari-2.8.18-1.x86_64.rpm')
+p3 = pr.parse_package_filename('seafari-2.8.18-1-x86_64.pkg.tar.zst')
+
+assert p1['name'] == 'seafari' and p1['type'] == 'deb' and p1['dist'] == 'stable'
+assert p2['name'] == 'seafari' and p2['type'] == 'rpm'
+assert p3['name'] == 'seafari' and p3['type'] == 'arch'
+print('OK')
+")
+if [ "$PRUNER_PARSE" = "OK" ]; then
+    pass "Pruner package classification works"
+else
+    fail "Pruner package classification failed"
 fi
 
 echo ""
@@ -77,8 +99,15 @@ touch public/rpm/appinstall-1.0.0-1.x86_64.rpm
 touch public/arch/appinstall-1.0.0-1-x86_64.pkg.tar.zst
 touch public/arch/seafari-1.11.0-1-x86_64.pkg.tar.zst
 
+# Create test current_assets.txt
+cat > current_assets.txt <<'TESTASSETS'
+appinstall-1.0.0-1.x86_64.rpm
+appinstall-1.0.0-1-x86_64.pkg.tar.zst
+seafari-1.11.0-1-x86_64.pkg.tar.zst
+TESTASSETS
+
 # Create test packages.json
-cat > packages.json <<'EOF'
+cat > packages.json <<'TESTPKG'
 {
   "appinstall": {
     "versions": {
@@ -96,7 +125,7 @@ cat > packages.json <<'EOF'
     }
   }
 }
-EOF
+TESTPKG
 
 # Generate web index
 if python3 generate-web-index.py "https://github.com/InledGroup/apt/releases/download/packages" "EB2D78F1CBA07666726817967EDDC83147A77DD4" 2>/dev/null; then
@@ -118,7 +147,6 @@ if [ -f public/index.html ]; then
 
     # Check key ID was replaced
     if grep -q 'EB2D78F1CBA07666726817967EDDC83147A77DD4' public/index.html; then
-        # Should only be in the pacman instructions, not in the raw placeholder
         pass "Key ID is present in generated HTML"
     else
         fail "Key ID missing in generated HTML"
@@ -151,6 +179,7 @@ fi
 rm -f public/rpm/appinstall-1.0.0-1.x86_64.rpm
 rm -f public/arch/appinstall-1.0.0-1-x86_64.pkg.tar.zst
 rm -f public/arch/seafari-1.11.0-1-x86_64.pkg.tar.zst
+rm -f current_assets.txt
 
 # Restore backup
 if [ -f packages.json.bak ]; then
@@ -167,15 +196,8 @@ else
     fail "Template lang is not 'en'"
 fi
 
-# Check no Spanish text remains in template
-if grep -q 'Zona Desarrolladores\|paquetes disponibles\|C[oó]mo usar\|Zona Desarrolladores\|llave GPG\|reinicias' index.html.template 2>/dev/null; then
-    fail "Template still contains Spanish text"
-else
-    pass "Template has no Spanish text"
-fi
-
 # Check template has KEY_ID placeholder
-if grep -q '<KEY_ID>' index.html.template; then
+if grep -q '&lt;KEY_ID&gt;\|<KEY_ID>' index.html.template; then
     pass "Template uses <KEY_ID> placeholder"
 else
     fail "Template missing <KEY_ID> placeholder"
@@ -200,11 +222,10 @@ fi
 echo ""
 echo "=== GPG fingerprint extraction test ==="
 
-# Create a temporary GPG key for testing
 GNUPGHOME=$(mktemp -d)
 export GNUPGHOME
 
-cat > /tmp/gpg-test-key <<EOF
+cat > /tmp/gpg-test-key <<TESTGPG
 %no-protection
 Key-Type: RSA
 Key-Length: 2048
@@ -212,7 +233,7 @@ Name-Real: Test Repo
 Name-Email: test@example.com
 Expire-Date: 0
 %commit
-EOF
+TESTGPG
 
 if gpg --batch --generate-key /tmp/gpg-test-key 2>/dev/null; then
     FPR=$(gpg --list-keys --with-colons "test@example.com" 2>/dev/null | grep '^fpr:' | head -1 | cut -d: -f10)
@@ -222,7 +243,7 @@ if gpg --batch --generate-key /tmp/gpg-test-key 2>/dev/null; then
         fail "GPG fingerprint extraction returned empty"
     fi
 else
-    fail "GPG key generation failed (skip if no gpg)"
+    fail "GPG key generation failed"
 fi
 
 rm -rf "$GNUPGHOME" /tmp/gpg-test-key

@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# Configuration
 ARCH_DIR="public/arch"
 REPO_NAME="inled"
 
@@ -20,47 +19,27 @@ echo "Using GPG fingerprint: $GPG_FINGERPRINT"
 
 # Ensure directories
 mkdir -p "$ARCH_DIR"
+DB_FILE="$ARCH_DIR/$REPO_NAME.db.tar.gz"
 
-# Add Arch packages from 'incoming'
+# Check if there are new Arch packages in incoming
 shopt -s nullglob
 incoming_pkgs=(incoming/*.pkg.tar.*)
 shopt -u nullglob
-if [ ${#incoming_pkgs[@]} -gt 0 ]; then
-    echo "Adding new Arch packages..."
-    cp incoming/*.pkg.tar.* "$ARCH_DIR/"
-    rm -f incoming/*.pkg.tar.*
-fi
 
-# Check if there are packages to process
-shopt -s nullglob
-arch_pkgs=("$ARCH_DIR"/*.pkg.tar.*)
-shopt -u nullglob
-if [ ${#arch_pkgs[@]} -eq 0 ]; then
-    echo "No Arch packages in $ARCH_DIR. Skipping database generation."
-    exit 0
-fi
-
-# Generate/Update database
-echo "Updating database with repo-add..."
-DB_FILE="$ARCH_DIR/$REPO_NAME.db.tar.gz"
-
-# Collect valid packages
 PKGS_TO_ADD=()
-for pkg in "$ARCH_DIR"/*.pkg.tar.*; do
+for pkg in "${incoming_pkgs[@]}"; do
     if [[ "$pkg" == *.sig ]]; then continue; fi
-    echo "Processing package: $pkg"
-    echo "Signing package $pkg with current GPG key..."
+    echo "Processing incoming Arch package: $pkg"
+    echo "Signing package $pkg..."
+    rm -f "$pkg.sig"
     gpg --batch --yes --detach-sign --default-key "$GPG_FINGERPRINT" "$pkg"
     PKGS_TO_ADD+=("$pkg")
 done
 
-if [ ${#PKGS_TO_ADD[@]} -eq 0 ]; then
-    echo "No valid packages to add."
-    exit 0
+if [ ${#PKGS_TO_ADD[@]} -gt 0 ]; then
+    echo "Running repo-add for ${#PKGS_TO_ADD[@]} packages..."
+    repo-add --sign --key "$GPG_FINGERPRINT" "$DB_FILE" "${PKGS_TO_ADD[@]}"
 fi
-
-echo "Running repo-add for ${#PKGS_TO_ADD[@]} packages..."
-repo-add --sign --key "$GPG_FINGERPRINT" "$DB_FILE" "${PKGS_TO_ADD[@]}"
 
 # Fix symlinks for Cloudflare Pages
 echo "Fixing symlinks for Cloudflare Pages..."
@@ -77,9 +56,9 @@ done
 for sig_src in "$ARCH_DIR/$REPO_NAME.db.tar.gz.sig" "$ARCH_DIR/$REPO_NAME.files.tar.gz.sig"; do
     if [ -f "$sig_src" ]; then
         sig_dst="${sig_src%.tar.gz.sig}.sig"
-        if [ ! -f "$sig_dst" ]; then
-            echo "Creating $sig_dst symlink for pacman compatibility..."
-            cp "$sig_src" "$sig_dst"
+        if [ ! -f "$sig_dst" ] || [ "$sig_src" -nt "$sig_dst" ]; then
+            echo "Creating $sig_dst for pacman compatibility..."
+            cp -f "$sig_src" "$sig_dst"
         fi
     fi
 done

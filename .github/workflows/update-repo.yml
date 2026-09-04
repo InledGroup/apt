@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       package_url:
-        description: "URL of the .deb or .rpm package to add"
+        description: "URL of the .deb, .rpm or .pkg.tar.zst package to add"
         required: false
       rebuild:
         description: "Set to true to re-download and re-sign all packages"
@@ -41,46 +41,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y aptly gpg createrepo-c pacman-package-manager zstd libarchive-tools
 
-      - name: Restore Aptly database
+      - name: Restore Aptly and Metadata cache
         uses: actions/cache@v4
         with:
           path: |
             .aptly
-            public/rpm
+            public/rpm/repodata
             public/arch
           key: ${{ runner.os }}-aptly-cache-${{ github.run_id }}
           restore-keys: |
             ${{ runner.os }}-aptly-cache-
 
-      - name: Sync and Reconstruct Repositories
+      - name: Sync metadata
         run: |
-          mkdir -p incoming public/rpm public/arch
+          mkdir -p incoming public/rpm/repodata public/arch
           if [ ! -d ".aptly/db" ]; then
-            echo "Aptly database cache not found. Reconstructing database from GitHub Release..."
-            gh release download packages --dir incoming --repo ${{ github.repository }} --clobber || echo "No release yet"
-            mv incoming/packages.json . 2>/dev/null || true
-            rm -f incoming/*.sig
-          else
-            echo "Aptly database cache is present. Downloading packages.json only..."
+            echo "Aptly database cache not found. Downloading packages.json..."
             gh release download packages --pattern "packages.json" --dir . --repo ${{ github.repository }} --clobber || echo "No previous packages.json"
           fi
-          # Always sync arch and rpm packages into public/ for cache persistence
-          gh release download packages --pattern "*.pkg.tar.zst" --pattern "*.pkg.tar.zst.sig" --dir public/arch --repo ${{ github.repository }} --clobber 2>/dev/null || echo "No arch packages in release yet"
-          gh release download packages --pattern "*.rpm" --dir public/rpm --repo ${{ github.repository }} --clobber 2>/dev/null || echo "No rpm packages in release yet"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Rebuild all packages (on [REBUILD] commit)
-        if: |
-          contains(github.event.head_commit.message, '[REBUILD]') ||
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.rebuild == 'true')
-        run: |
-          echo "REBUILD flag detected: re-downloading all packages for re-signing..."
-          gh release download packages --dir incoming --repo ${{ github.repository }} --clobber || echo "No release yet"
-          mv incoming/packages.json . 2>/dev/null || true
-          # Remove old signatures so packages get re-signed with the current GPG key
-          rm -f incoming/*.sig
-          echo "All packages downloaded. Old signatures removed. Re-signing will happen in the next steps."
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -100,7 +78,7 @@ jobs:
           else
             echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
           fi
-          # Export the fingerprint for subsequent steps
+          # Export fingerprint
           FPR=$(gpg --list-secret-keys --with-colons | grep '^fpr:' | head -1 | cut -d: -f10)
           echo "fingerprint=$FPR" >> $GITHUB_OUTPUT
           echo "Using GPG fingerprint: $FPR"
@@ -112,8 +90,6 @@ jobs:
           CLIENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |
           mkdir -p incoming
-          # Snapshot of incoming/ before this run's downloads, so we can tell
-          # apart genuinely new packages from leftovers of previous steps
           find incoming -maxdepth 1 -type f | sort > /tmp/incoming-before.txt
 
           if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
@@ -145,10 +121,15 @@ jobs:
             wget -q "$URL" -O "incoming/$FILENAME"
           fi
 
-          # Only the files added by this trigger are "new" (Discord summary)
           find incoming -maxdepth 1 -type f | sort > /tmp/incoming-after.txt
           comm -13 /tmp/incoming-before.txt /tmp/incoming-after.txt > /tmp/new-packages.txt || true
           echo "New packages detected: $(wc -l < /tmp/new-packages.txt)"
+
+      - name: Prune and Sync Release Assets
+        run: |
+          python3 prune-release.py --repo "${{ github.repository }}" --tag packages --incoming incoming
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Update repository
         run: |
@@ -156,7 +137,6 @@ jobs:
           export RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}"
           export GPG_FINGERPRINT="${{ steps.gpg.outputs.fingerprint }}"
           
-          # Parse target branch/distribution from repository_dispatch or workflow_dispatch
           PAYLOAD_OBJ=$(echo '${{ toJson(github.event.client_payload) }}' | jq 'if type == "string" then fromjson else . end' 2>/dev/null || echo "{}")
           export DISTRIBUTION=$(echo "$PAYLOAD_OBJ" | jq -r '.branch // empty')
           if [ -z "$DISTRIBUTION" ] || [ "$DISTRIBUTION" == "null" ]; then
@@ -164,76 +144,11 @@ jobs:
           fi
           echo "Updating repository for distribution branch: $DISTRIBUTION"
           
-          # Fetch list of active release assets to prevent 404 references in indices and packages.json
-          gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' --repo ${{ github.repository }} > current_assets.txt || touch current_assets.txt
-          
           ./update-repo.sh
         env:
           RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/packages
 
-      - name: Remove old package versions
-        run: |
-          TAG="packages"
-          RELEASE_EXISTS=$(gh release view "$TAG" --repo ${{ github.repository }} 2>/dev/null && echo "true" || echo "false")
-          if [ "$RELEASE_EXISTS" = "false" ]; then
-            echo "Release does not exist yet, skipping cleanup"
-            exit 0
-          fi
-          belongs_to_dist() {
-            local asset_name="$1"
-            local dist="$2"
-            if [ "$dist" = "forky" ]; then
-              [[ "$asset_name" == *"deb14"* ]]
-              return $?
-            elif [ "$dist" = "rolling" ]; then
-              [[ "$asset_name" == *"rolling"* ]]
-              return $?
-            else
-              if [[ "$asset_name" == *"deb13"* ]]; then
-                return 0
-              elif [[ "$asset_name" == *"deb14"* ]] || [[ "$asset_name" == *"rolling"* ]]; then
-                return 1
-              else
-                return 0
-              fi
-            fi
-          }
-
-          echo "Cleaning up old package versions for distribution: $DISTRIBUTION..."
-          for file in incoming/*.deb incoming/*.rpm incoming/*.pkg.tar.*; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              if [[ "$filename" == *.deb ]]; then
-                package_base=$(echo "$filename" | sed 's/_[0-9][0-9.~+:-]*_.*//')
-                allowed_pattern="\.deb$"
-              elif [[ "$filename" == *.rpm ]]; then
-                package_base=$(echo "$filename" | sed 's/-[0-9][0-9.~+:-]*.rpm$//')
-                allowed_pattern="\.rpm$"
-              elif [[ "$filename" == *.pkg.tar.* ]]; then
-                package_base=$(echo "$filename" | sed 's/-[0-9][0-9.~+:-]*-.*//')
-                allowed_pattern="\.pkg\.tar\."
-              else
-                continue
-              fi
-              echo "Processing new package: $filename (base: $package_base)"
-              gh release view "$TAG" --json assets --jq '.assets[].name' --repo ${{ github.repository }} | while read asset; do
-                if [[ "$asset" =~ $allowed_pattern ]]; then
-                  if [[ "$asset" == "${package_base}"_* ]] || [[ "$asset" == "${package_base}"-* ]]; then
-                    if [ "$asset" != "$filename" ] && belongs_to_dist "$asset" "$DISTRIBUTION"; then
-                      echo "  Deleting old version: $asset"
-                      gh release delete-asset "$TAG" "$asset" --repo ${{ github.repository }} --yes || true
-                      sleep 1
-                    fi
-                  fi
-                fi
-              done
-            fi
-          done
-        env:
-          GH_TOKEN: ${{ github.token }}
-        continue-on-error: true
-
-      - name: Upload to GitHub Release
+      - name: Upload new packages to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: packages
@@ -250,17 +165,14 @@ jobs:
             local base name ver
             base=$(basename "$1")
             if [[ "$base" == *.deb ]]; then
-              # name_version_arch.deb
               name=${base%%_*}
               ver=$(echo "$base" | cut -d_ -f2)
             elif [[ "$base" == *.rpm ]]; then
-              # name-version-release.arch.rpm (name may contain '-')
               local nv=${base%.rpm}
               local nv2=${nv%-*}
               name=${nv2%-*}
               ver=${nv2##*-}
             else
-              # name-version-pkgrel-arch.pkg.tar.* (name may contain '-')
               local core=${base%%.pkg.tar.*}
               local core2=${core%-*}
               local core3=${core2%-*}
@@ -271,7 +183,6 @@ jobs:
           }
 
           if [ -s /tmp/new-packages.txt ]; then
-            # List only the packages received in this trigger's request
             echo "📦 **New packages on apt.inled.es**" > /tmp/pkg-summary.txt
             echo "" >> /tmp/pkg-summary.txt
             while IFS= read -r f; do
@@ -282,7 +193,6 @@ jobs:
               extract_meta "$f" >> /tmp/pkg-summary.txt
             done < /tmp/new-packages.txt
           else
-            # No new packages in this run (metadata update, rebuild, etc.)
             echo "🔄 **Repository metadata updated**" > /tmp/pkg-summary.txt
           fi
           echo "" >> /tmp/pkg-summary.txt
@@ -296,7 +206,7 @@ jobs:
           retention-days: 1
 
       - name: Deploy to Cloudflare Pages
-        run: npx wrangler pages deploy public --project-name inled-apt --branch main
+        run: npx wrangler pages deploy public --project-name inled-apt --branch main --commit-dirty=true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

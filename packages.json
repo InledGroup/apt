@@ -1,62 +1,340 @@
 {
   "appinstall": {
     "versions": {
-      "16": [
+      "21.5": [
         {
           "name": "appinstall",
-          "version": "16",
+          "version": "21.5",
+          "arch": "any",
+          "type": "arch",
+          "file": "appinstall-21.5-1-any.pkg.tar.zst"
+        },
+        {
+          "name": "appinstall",
+          "version": "21.5",
           "arch": "all",
           "type": "deb",
-          "file": "appinstall_16_all.deb"
+          "branch": "stable",
+          "file": "appinstall_21.5_all.deb"
+        }
+      ],
+      "21.5-1": [
+        {
+          "name": "appinstall",
+          "version": "21.5-1",
+          "arch": "noarch",
+          "type": "rpm",
+          "file": "appinstall-21.5-1.noarch.rpm"
+        }
+      ]
+    }
+  },
+  "calamares": {
+    "versions": {
+      "3.4.2": [
+        {
+          "name": "calamares",
+          "version": "3.4.2",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "calamares-3.4.2-2-x86_64.pkg.tar.zst"
+        }
+      ]
+    }
+  },
+  "dockmigrate": {
+    "versions": {
+      "0.0.1": [
+        {
+          "name": "dockmigrate",
+          "version": "0.0.1",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "dockmigrate_0.0.1_amd64.deb"
+        }
+      ]
+    }
+  },
+  "driverman": {
+    "versions": {
+      "1.0.0": [
+        {
+          "name": "driverman",
+          "version": "1.0.0",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "driverman-1.0.0-1-x86_64.pkg.tar.zst"
+        }
+      ],
+      "1.0.15": [
+        {
+          "name": "driverman",
+          "version": "1.0.15",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "driverman_1.0.15_amd64.deb"
         }
       ]
     }
   },
   "droidtux": {
     "versions": {
-      "1.0.18": [
+      "1.0.35": [
         {
           "name": "droidtux",
-          "version": "1.0.18",
+          "version": "1.0.35",
+          "arch": "any",
+          "type": "arch",
+          "file": "droidtux-1.0.35-1-any.pkg.tar.zst"
+        },
+        {
+          "name": "droidtux",
+          "version": "1.0.35",
           "arch": "all",
           "type": "deb",
-          "file": "droidtux_1.0.18_all.deb"
+          "branch": "stable",
+          "file": "droidtux_1.0.35_all.deb"
         }
       ],
-      "1.0.9": [
+      "1.0.35-1": [
         {
           "name": "droidtux",
-          "version": "1.0.9",
-          "arch": "amd64",
+          "version": "1.0.35-1",
+          "arch": "noarch",
+          "type": "rpm",
+          "file": "droidtux-1.0.35-1.noarch.rpm"
+        }
+      ]
+    }
+  },
+  "gnome-control-center": {
+    "versions": {
+      "50.4": [
+        {
+          "name": "gnome-control-center",
+          "version": "50.4",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "gnome-control-center-50.4-1-x86_64.pkg.tar.zst"
+        }
+      ]
+    }
+  },
+  "gnome-control-center-debug": {
+    "versions": {
+      "50.4": [
+        {
+          "name": "gnome-control-center-debug",
+          "version": "50.4",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "gnome-control-center-debug-50.4-1-x86_64.pkg.tar.zst"
+        }
+      ]
+    }
+  },
+  "gnome-keybindings": {
+    "versions": {
+      "50.4": [
+        {
+          "name": "gnome-keybindings",
+          "version": "50.4",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "gnome-keybindings-50.4-1-x86_64.pkg.tar.zst"
+        }
+      ]
+    }
+  },
+  "gnome-macos-remap-wayland": {
+    "versions": {
+      "1.0.96": [
+        {
+          "name": "gnome-macos-remap-wayland",
+          "version": "1.0.96",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "gnome-macos-remap-wayland-1.0.96-1-x86_64.pkg.tar.zst"
+        }
+      ],
+      "1.0.2+deb14": [
+        {
+          "name": "gnome-macos-remap-wayland",
+          "version": "1.0.2+deb14",
+          "arch": "all",
           "type": "deb",
-          "file": "droidtux_1.0.9_amd64.deb"
+          "branch": "forky",
+          "file": "gnome-macos-remap-wayland_1.0.2+deb14_all.deb"
+        }
+      ],
+      "1.0.3+rolling": [
+        {
+          "name": "gnome-macos-remap-wayland",
+          "version": "1.0.3+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "gnome-macos-remap-wayland_1.0.3+rolling_all.deb"
+        }
+      ],
+      "1.0.93": [
+        {
+          "name": "gnome-macos-remap-wayland",
+          "version": "1.0.93",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "gnome-macos-remap-wayland_1.0.93_all.deb"
         }
       ]
     }
   },
   "macboat": {
     "versions": {
-      "2.0.7": [
+      "2.0.8": [
         {
           "name": "macboat",
-          "version": "2.0.7",
+          "version": "2.0.8",
+          "arch": "any",
+          "type": "arch",
+          "file": "macboat-2.0.8-1-any.pkg.tar.zst"
+        },
+        {
+          "name": "macboat",
+          "version": "2.0.8",
           "arch": "amd64",
           "type": "deb",
-          "file": "macboat_2.0.7_amd64.deb"
+          "branch": "stable",
+          "file": "macboat_2.0.8_amd64.deb"
+        }
+      ],
+      "2.0.8-1.fc44": [
+        {
+          "name": "macboat",
+          "version": "2.0.8-1.fc44",
+          "arch": "x86_64",
+          "type": "rpm",
+          "file": "macboat-2.0.8-1.fc44.x86_64.rpm"
+        }
+      ]
+    }
+  },
+  "nautilus": {
+    "versions": {
+      "1.48.7": [
+        {
+          "name": "nautilus",
+          "version": "1.48.7",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "nautilus-1.48.7-2-x86_64.pkg.tar.zst"
+        }
+      ],
+      "48.15": [
+        {
+          "name": "nautilus",
+          "version": "48.15",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "nautilus_48.15_amd64.deb"
+        }
+      ]
+    }
+  },
+  "nautilus-debug": {
+    "versions": {
+      "1.48.7": [
+        {
+          "name": "nautilus-debug",
+          "version": "1.48.7",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "nautilus-debug-1.48.7-2-x86_64.pkg.tar.zst"
+        }
+      ]
+    }
+  },
+  "pamtester": {
+    "versions": {
+      "0.1.2": [
+        {
+          "name": "pamtester",
+          "version": "0.1.2",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "pamtester-0.1.2-4-x86_64.pkg.tar.zst"
+        }
+      ]
+    }
+  },
+  "pulsar-pear-sound-theme": {
+    "versions": {
+      "1.0.0": [
+        {
+          "name": "pulsar-pear-sound-theme",
+          "version": "1.0.0",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsar-pear-sound-theme-1.0.0-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.3": [
+        {
+          "name": "pulsar-pear-sound-theme",
+          "version": "1.0.3",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsar-pear-sound-theme_1.0.3_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-boot-icons": {
+    "versions": {
+      "1.0.0": [
+        {
+          "name": "pulsaros-boot-icons",
+          "version": "1.0.0",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-boot-icons-1.0.0-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.21": [
+        {
+          "name": "pulsaros-boot-icons",
+          "version": "1.0.21",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-boot-icons_1.0.21_all.deb"
         }
       ]
     }
   },
   "pulsaros-bootsound": {
     "versions": {
-      "1.0.36": [
+      "1.0.120": [
         {
           "name": "pulsaros-bootsound",
-          "version": "1.0.36",
+          "version": "1.0.120",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-bootsound-1.0.120-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.116": [
+        {
+          "name": "pulsaros-bootsound",
+          "version": "1.0.116",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-bootsound_1.0.36_all.deb"
+          "file": "pulsaros-bootsound_1.0.116_all.deb"
         }
       ],
       "1.0.35+deb14": [
@@ -83,14 +361,23 @@
   },
   "pulsaros-branding": {
     "versions": {
-      "1.0.36": [
+      "1.0.121": [
         {
           "name": "pulsaros-branding",
-          "version": "1.0.36",
+          "version": "1.0.121",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-branding-1.0.121-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.117": [
+        {
+          "name": "pulsaros-branding",
+          "version": "1.0.117",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-branding_1.0.36_all.deb"
+          "file": "pulsaros-branding_1.0.117_all.deb"
         }
       ],
       "1.0.35+deb14": [
@@ -117,14 +404,23 @@
   },
   "pulsaros-calamares": {
     "versions": {
-      "1.0.37": [
+      "1.0.120": [
         {
           "name": "pulsaros-calamares",
-          "version": "1.0.37",
+          "version": "1.0.120",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-calamares-1.0.120-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.106": [
+        {
+          "name": "pulsaros-calamares",
+          "version": "1.0.106",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-calamares_1.0.37_all.deb"
+          "file": "pulsaros-calamares_1.0.106_all.deb"
         }
       ],
       "1.0.36+deb14": [
@@ -149,16 +445,89 @@
       ]
     }
   },
-  "pulsaros-effects-settings": {
+  "pulsaros-circle-to-search": {
     "versions": {
-      "1.0.35": [
+      "1.0.11": [
         {
-          "name": "pulsaros-effects-settings",
-          "version": "1.0.35",
+          "name": "pulsaros-circle-to-search",
+          "version": "1.0.11",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-effects-settings_1.0.35_all.deb"
+          "file": "pulsaros-circle-to-search_1.0.11_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-cloud": {
+    "versions": {
+      "1.0.0": [
+        {
+          "name": "pulsaros-cloud",
+          "version": "1.0.0",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "pulsaros-cloud-1.0.0-11-x86_64.pkg.tar.zst"
+        }
+      ],
+      "1.0.0-14": [
+        {
+          "name": "pulsaros-cloud",
+          "version": "1.0.0-14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-cloud_1.0.0-14_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-control-center-button": {
+    "versions": {
+      "1.0.117": [
+        {
+          "name": "pulsaros-control-center-button",
+          "version": "1.0.117",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-control-center-button-1.0.117-1-any.pkg.tar.zst"
+        }
+      ]
+    }
+  },
+  "pulsaros-control-center": {
+    "versions": {
+      "1.0.29": [
+        {
+          "name": "pulsaros-control-center",
+          "version": "1.0.29",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-control-center_1.0.29_amd64.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-effects-settings": {
+    "versions": {
+      "1.0.120": [
+        {
+          "name": "pulsaros-effects-settings",
+          "version": "1.0.120",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-effects-settings-1.0.120-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.118": [
+        {
+          "name": "pulsaros-effects-settings",
+          "version": "1.0.118",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-effects-settings_1.0.118_all.deb"
         }
       ],
       "1.0.34+deb14": [
@@ -183,16 +552,48 @@
       ]
     }
   },
-  "pulsaros-essential": {
+  "pulsaros-emoji-fonts": {
     "versions": {
-      "1.0.35": [
+      "1.0.1": [
         {
-          "name": "pulsaros-essential",
-          "version": "1.0.35",
+          "name": "pulsaros-emoji-fonts",
+          "version": "1.0.1",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-emoji-fonts-1.0.1-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.2": [
+        {
+          "name": "pulsaros-emoji-fonts",
+          "version": "1.0.2",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-essential_1.0.35_all.deb"
+          "file": "pulsaros-emoji-fonts_1.0.2_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-essential": {
+    "versions": {
+      "1.0.118": [
+        {
+          "name": "pulsaros-essential",
+          "version": "1.0.118",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-essential-1.0.118-2-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.121": [
+        {
+          "name": "pulsaros-essential",
+          "version": "1.0.121",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-essential_1.0.121_all.deb"
         }
       ],
       "1.0.34+deb14": [
@@ -219,14 +620,23 @@
   },
   "pulsaros-global-menu": {
     "versions": {
-      "1.0.37": [
+      "1.0.122": [
         {
           "name": "pulsaros-global-menu",
-          "version": "1.0.37",
+          "version": "1.0.122",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-global-menu-1.0.122-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.124": [
+        {
+          "name": "pulsaros-global-menu",
+          "version": "1.0.124",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-global-menu_1.0.37_all.deb"
+          "file": "pulsaros-global-menu_1.0.124_all.deb"
         }
       ],
       "1.0.36+deb14": [
@@ -253,14 +663,23 @@
   },
   "pulsaros-gnome": {
     "versions": {
-      "1.0.35": [
+      "1.0.124": [
         {
           "name": "pulsaros-gnome",
-          "version": "1.0.35",
+          "version": "1.0.124",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-gnome-1.0.124-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.140": [
+        {
+          "name": "pulsaros-gnome",
+          "version": "1.0.140",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-gnome_1.0.35_all.deb"
+          "file": "pulsaros-gnome_1.0.140_all.deb"
         }
       ],
       "1.0.34+deb14": [
@@ -287,14 +706,21 @@
   },
   "pulsaros-grub": {
     "versions": {
-      "1.0.31": [
+      "1.0.114": [
         {
           "name": "pulsaros-grub",
-          "version": "1.0.31",
+          "version": "1.0.114",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-grub-1.0.114-1-any.pkg.tar.zst"
+        },
+        {
+          "name": "pulsaros-grub",
+          "version": "1.0.114",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-grub_1.0.31_all.deb"
+          "file": "pulsaros-grub_1.0.114_all.deb"
         }
       ],
       "1.0.30+deb14": [
@@ -319,16 +745,94 @@
       ]
     }
   },
-  "pulsaros-plymouth": {
+  "pulsaros-hibernate": {
     "versions": {
-      "1.0.33": [
+      "1.0.8": [
         {
-          "name": "pulsaros-plymouth",
-          "version": "1.0.33",
+          "name": "pulsaros-hibernate",
+          "version": "1.0.8",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-hibernate-1.0.8-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.9": [
+        {
+          "name": "pulsaros-hibernate",
+          "version": "1.0.9",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-plymouth_1.0.33_all.deb"
+          "file": "pulsaros-hibernate_1.0.9_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-live-wallpaper": {
+    "versions": {
+      "1.0.1": [
+        {
+          "name": "pulsaros-live-wallpaper",
+          "version": "1.0.1",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-live-wallpaper-1.0.1-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.13": [
+        {
+          "name": "pulsaros-live-wallpaper",
+          "version": "1.0.13",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-live-wallpaper_1.0.13_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-meta": {
+    "versions": {
+      "1.0.1": [
+        {
+          "name": "pulsaros-meta",
+          "version": "1.0.1",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-meta-1.0.1-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.4": [
+        {
+          "name": "pulsaros-meta",
+          "version": "1.0.4",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-meta_1.0.4_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-plymouth": {
+    "versions": {
+      "1.0.121": [
+        {
+          "name": "pulsaros-plymouth",
+          "version": "1.0.121",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-plymouth-1.0.121-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.115": [
+        {
+          "name": "pulsaros-plymouth",
+          "version": "1.0.115",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-plymouth_1.0.115_all.deb"
         }
       ],
       "1.0.32+deb14": [
@@ -355,14 +859,23 @@
   },
   "pulsaros-recovery": {
     "versions": {
-      "1.0.40": [
+      "1.0.138": [
         {
           "name": "pulsaros-recovery",
-          "version": "1.0.40",
-          "arch": "all",
+          "version": "1.0.138",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-recovery-1.0.138-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.143": [
+        {
+          "name": "pulsaros-recovery",
+          "version": "1.0.143",
+          "arch": "amd64",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-recovery_1.0.40_all.deb"
+          "file": "pulsaros-recovery_1.0.143_amd64.deb"
         }
       ],
       "1.0.39+deb14": [
@@ -387,16 +900,68 @@
       ]
     }
   },
-  "pulsaros-sddm": {
+  "pulsaros-refind": {
     "versions": {
-      "1.0.35": [
+      "1.0.118": [
         {
-          "name": "pulsaros-sddm",
-          "version": "1.0.35",
+          "name": "pulsaros-refind",
+          "version": "1.0.118",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-refind-1.0.118-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.113": [
+        {
+          "name": "pulsaros-refind",
+          "version": "1.0.113",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-sddm_1.0.35_all.deb"
+          "file": "pulsaros-refind_1.0.113_all.deb"
+        }
+      ],
+      "1.0.33+deb14": [
+        {
+          "name": "pulsaros-refind",
+          "version": "1.0.33+deb14",
+          "arch": "all",
+          "type": "deb",
+          "branch": "forky",
+          "file": "pulsaros-refind_1.0.33+deb14_all.deb"
+        }
+      ],
+      "1.0.34+rolling": [
+        {
+          "name": "pulsaros-refind",
+          "version": "1.0.34+rolling",
+          "arch": "all",
+          "type": "deb",
+          "branch": "rolling",
+          "file": "pulsaros-refind_1.0.34+rolling_all.deb"
+        }
+      ]
+    }
+  },
+  "pulsaros-sddm": {
+    "versions": {
+      "1.0.121": [
+        {
+          "name": "pulsaros-sddm",
+          "version": "1.0.121",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-sddm-1.0.121-1-any.pkg.tar.zst"
+        }
+      ],
+      "1.0.116": [
+        {
+          "name": "pulsaros-sddm",
+          "version": "1.0.116",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-sddm_1.0.116_all.deb"
         }
       ],
       "1.0.34+deb14": [
@@ -423,14 +988,13 @@
   },
   "pulsaros-spotlight-launcher": {
     "versions": {
-      "1.0.35": [
+      "2.0.0": [
         {
           "name": "pulsaros-spotlight-launcher",
-          "version": "1.0.35",
-          "arch": "all",
-          "type": "deb",
-          "branch": "stable",
-          "file": "pulsaros-spotlight-launcher_1.0.35_all.deb"
+          "version": "2.0.0",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-spotlight-launcher-2.0.0-5-any.pkg.tar.zst"
         }
       ],
       "1.0.34+deb14": [
@@ -452,19 +1016,36 @@
           "branch": "rolling",
           "file": "pulsaros-spotlight-launcher_1.0.35+rolling_all.deb"
         }
+      ],
+      "2.0.23": [
+        {
+          "name": "pulsaros-spotlight-launcher",
+          "version": "2.0.23",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-spotlight-launcher_2.0.23_amd64.deb"
+        }
       ]
     }
   },
   "pulsaros-theme": {
     "versions": {
-      "1.0.35": [
+      "1.0.119": [
         {
           "name": "pulsaros-theme",
-          "version": "1.0.35",
+          "version": "1.0.119",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-theme-1.0.119-1-any.pkg.tar.zst"
+        },
+        {
+          "name": "pulsaros-theme",
+          "version": "1.0.119",
           "arch": "all",
           "type": "deb",
           "branch": "stable",
-          "file": "pulsaros-theme_1.0.35_all.deb"
+          "file": "pulsaros-theme_1.0.119_all.deb"
         }
       ],
       "1.0.34+deb14": [
@@ -491,14 +1072,13 @@
   },
   "pulsaros-welcome": {
     "versions": {
-      "1.0.35": [
+      "2.0.2": [
         {
           "name": "pulsaros-welcome",
-          "version": "1.0.35",
-          "arch": "all",
-          "type": "deb",
-          "branch": "stable",
-          "file": "pulsaros-welcome_1.0.35_all.deb"
+          "version": "2.0.2",
+          "arch": "any",
+          "type": "arch",
+          "file": "pulsaros-welcome-2.0.2-1-any.pkg.tar.zst"
         }
       ],
       "1.0.34+deb14": [
@@ -520,108 +1100,117 @@
           "branch": "rolling",
           "file": "pulsaros-welcome_1.0.35+rolling_all.deb"
         }
+      ],
+      "2.0.3": [
+        {
+          "name": "pulsaros-welcome",
+          "version": "2.0.3",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "pulsaros-welcome_2.0.3_amd64.deb"
+        }
+      ]
+    }
+  },
+  "sayri": {
+    "versions": {
+      "0.1.4": [
+        {
+          "name": "sayri",
+          "version": "0.1.4",
+          "arch": "any",
+          "type": "arch",
+          "file": "sayri-0.1.4-1-any.pkg.tar.zst"
+        }
+      ],
+      "0.1.5": [
+        {
+          "name": "sayri",
+          "version": "0.1.5",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "sayri_0.1.5_all.deb"
+        }
+      ]
+    }
+  },
+  "scrcpy": {
+    "versions": {
+      "2.4-1.1.1.1.1.1.1": [
+        {
+          "name": "scrcpy",
+          "version": "2.4-1.1.1.1.1.1.1",
+          "arch": "all",
+          "type": "deb",
+          "branch": "stable",
+          "file": "scrcpy_2.4-1.1.1.1.1.1.1_all.deb"
+        }
       ]
     }
   },
   "seafari": {
     "versions": {
-      "1.11.14": [
+      "2.8.18": [
         {
           "name": "seafari",
-          "version": "1.11.14",
-          "arch": "amd64",
-          "type": "deb",
-          "branch": "stable",
-          "file": "seafari_1.11.14_amd64.deb"
+          "version": "2.8.18",
+          "arch": "aarch64",
+          "type": "arch",
+          "file": "seafari-2.8.18-1-aarch64.pkg.tar.zst"
         },
         {
           "name": "seafari",
-          "version": "1.11.14",
+          "version": "2.8.18",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "seafari-2.8.18-1-x86_64.pkg.tar.zst"
+        },
+        {
+          "name": "seafari",
+          "version": "2.8.18",
+          "arch": "amd64",
+          "type": "deb",
+          "branch": "stable",
+          "file": "seafari_2.8.18_amd64.deb"
+        },
+        {
+          "name": "seafari",
+          "version": "2.8.18",
           "arch": "arm64",
           "type": "deb",
           "branch": "stable",
-          "file": "seafari_1.11.14_arm64.deb"
+          "file": "seafari_2.8.18_arm64.deb"
+        }
+      ],
+      "2.8.18-1": [
+        {
+          "name": "seafari",
+          "version": "2.8.18-1",
+          "arch": "aarch64",
+          "type": "rpm",
+          "file": "seafari-2.8.18-1.aarch64.rpm"
+        },
+        {
+          "name": "seafari",
+          "version": "2.8.18-1",
+          "arch": "x86_64",
+          "type": "rpm",
+          "file": "seafari-2.8.18-1.x86_64.rpm"
         }
       ]
     }
   },
-  "spotlight-python": {
+  "spotlight-gtk": {
     "versions": {
-      "1.0.1": [
+      "1.0.96": [
         {
-          "name": "spotlight-python",
-          "version": "1.0.1",
-          "arch": "all",
-          "type": "deb",
-          "file": "spotlight-python_1.0.1_all.deb"
-        }
-      ]
-    }
-  },
-  "gnome-macos-remap-wayland": {
-    "versions": {
-      "1.0.3": [
-        {
-          "name": "gnome-macos-remap-wayland",
-          "version": "1.0.3",
-          "arch": "all",
-          "type": "deb",
-          "branch": "stable",
-          "file": "gnome-macos-remap-wayland_1.0.3_all.deb"
-        }
-      ],
-      "1.0.2+deb14": [
-        {
-          "name": "gnome-macos-remap-wayland",
-          "version": "1.0.2+deb14",
-          "arch": "all",
-          "type": "deb",
-          "branch": "forky",
-          "file": "gnome-macos-remap-wayland_1.0.2+deb14_all.deb"
-        }
-      ],
-      "1.0.3+rolling": [
-        {
-          "name": "gnome-macos-remap-wayland",
-          "version": "1.0.3+rolling",
-          "arch": "all",
-          "type": "deb",
-          "branch": "rolling",
-          "file": "gnome-macos-remap-wayland_1.0.3+rolling_all.deb"
-        }
-      ]
-    }
-  },
-  "pulsaros-refind": {
-    "versions": {
-      "1.0.34": [
-        {
-          "name": "pulsaros-refind",
-          "version": "1.0.34",
-          "arch": "all",
-          "type": "deb",
-          "branch": "stable",
-          "file": "pulsaros-refind_1.0.34_all.deb"
-        }
-      ],
-      "1.0.33+deb14": [
-        {
-          "name": "pulsaros-refind",
-          "version": "1.0.33+deb14",
-          "arch": "all",
-          "type": "deb",
-          "branch": "forky",
-          "file": "pulsaros-refind_1.0.33+deb14_all.deb"
-        }
-      ],
-      "1.0.34+rolling": [
-        {
-          "name": "pulsaros-refind",
-          "version": "1.0.34+rolling",
-          "arch": "all",
-          "type": "deb",
-          "branch": "rolling",
-          "file": "pulsaros-refind_1.0.34+rolling_all.deb"
+          "name": "spotlight-gtk",
+          "version": "1.0.96",
+          "arch": "any",
+          "type": "arch",
+          "file": "spotlight-gtk-1.0.96-1-any.pkg.tar.zst"
         }
       ]
     }
@@ -629,6 +1218,20 @@
   "vozes": {
     "versions": {
       "1.6.7": [
+        {
+          "name": "vozes",
+          "version": "1.6.7",
+          "arch": "aarch64",
+          "type": "arch",
+          "file": "vozes-1.6.7-1-aarch64.pkg.tar.zst"
+        },
+        {
+          "name": "vozes",
+          "version": "1.6.7",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "vozes-1.6.7-1-x86_64.pkg.tar.zst"
+        },
         {
           "name": "vozes",
           "version": "1.6.7",
@@ -644,6 +1247,48 @@
           "type": "deb",
           "branch": "stable",
           "file": "vozes_1.6.7_arm64.deb"
+        }
+      ],
+      "1.6.7-1": [
+        {
+          "name": "vozes",
+          "version": "1.6.7-1",
+          "arch": "arm64",
+          "type": "rpm",
+          "file": "vozes-1.6.7-1.arm64.rpm"
+        },
+        {
+          "name": "vozes",
+          "version": "1.6.7-1",
+          "arch": "x86_64",
+          "type": "rpm",
+          "file": "vozes-1.6.7-1.x86_64.rpm"
+        }
+      ]
+    }
+  },
+  "winboat-bin": {
+    "versions": {
+      "0.9.0": [
+        {
+          "name": "winboat-bin",
+          "version": "0.9.0",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "winboat-bin-0.9.0-1-x86_64.pkg.tar.zst"
+        }
+      ]
+    }
+  },
+  "xremap-gnome-bin": {
+    "versions": {
+      "0.15.9": [
+        {
+          "name": "xremap-gnome-bin",
+          "version": "0.15.9",
+          "arch": "x86_64",
+          "type": "arch",
+          "file": "xremap-gnome-bin-0.15.9-1-x86_64.pkg.tar.zst"
         }
       ]
     }

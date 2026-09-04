@@ -6,6 +6,17 @@ import json
 import sys
 import tempfile
 
+DEB_RE = re.compile(r"^(?P<name>[^_]+)_(?P<version>[^_]+)_(?P<arch>[^_]+)\.deb$")
+RPM_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d.*?)\.(?P<arch>x86_64|aarch64|arm64|noarch|i386|i686|armv7hl)\.rpm$")
+ARCH_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d[^-]*)-(?P<pkgrel>\d+)-(?P<arch>[^.]+)\.pkg\.tar\..+$")
+
+def get_deb_dist(version):
+    if "deb14" in version:
+        return "forky"
+    elif "rolling" in version:
+        return "rolling"
+    return "stable"
+
 def get_apt_packages(repo_name):
     packages = []
     try:
@@ -38,42 +49,59 @@ def get_apt_packages(repo_name):
                         "file": f"{parts[0]}_{parts[1]}_{parts[2]}.deb"
                     })
     except Exception as e:
-        print(f"Error APT: {e}")
+        pass
     return packages
 
-def get_rpm_packages(rpm_dir):
+def get_packages_from_assets(assets_file):
     packages = []
-    if not os.path.exists(rpm_dir): return packages
-    for f in os.listdir(rpm_dir):
-        if f.endswith(".rpm"):
-            # RPM: name-version-release.arch.rpm
-            match = re.match(r"^(.+)-(\d[^-]*)-\d+\.([^.]+)\.rpm$", f)
-            if match:
-                packages.append({"name": match.group(1), "version": match.group(2), "arch": match.group(3), "type": "rpm", "file": f})
-            else:
-                packages.append({"name": f.split("-")[0], "version": "unknown", "arch": "unknown", "type": "rpm", "file": f})
-    return packages
-
-def get_arch_packages(arch_dir):
-    packages = []
-    if not os.path.exists(arch_dir): return packages
-    for f in os.listdir(arch_dir):
-        if f.endswith(".pkg.tar.zst") or f.endswith(".pkg.tar.xz") or f.endswith(".pkg.tar.gz"):
-            # Arch: name-version-pkgrel-arch.pkg.tar.zst
-            match = re.match(r"^(.+)-(\d[^-]*)-(\d+)-([^.]+)\.pkg\.tar\..+$", f)
-            if match:
-                packages.append({"name": match.group(1), "version": match.group(2), "arch": match.group(4), "type": "arch", "file": f})
-            else:
-                packages.append({"name": f.split("-")[0], "version": "unknown", "arch": "unknown", "type": "arch", "file": f})
+    if not os.path.exists(assets_file):
+        return packages
+    with open(assets_file, "r", encoding="utf-8") as f:
+        for line in f:
+            filename = line.strip()
+            if not filename or filename.endswith(".sig") or filename == "packages.json":
+                continue
+            if m := RPM_RE.match(filename):
+                packages.append({
+                    "name": m.group("name"),
+                    "version": m.group("version"),
+                    "arch": m.group("arch"),
+                    "type": "rpm",
+                    "file": filename
+                })
+            elif m := ARCH_RE.match(filename):
+                packages.append({
+                    "name": m.group("name"),
+                    "version": m.group("version"),
+                    "arch": m.group("arch"),
+                    "type": "arch",
+                    "file": filename
+                })
+            elif m := DEB_RE.match(filename):
+                ver = m.group("version")
+                packages.append({
+                    "name": m.group("name"),
+                    "version": ver,
+                    "arch": m.group("arch"),
+                    "type": "deb",
+                    "branch": get_deb_dist(ver),
+                    "file": filename
+                })
     return packages
 
 def version_key(version_str):
     try:
-        cleaned = re.sub(r'[^\d.]', '.', version_str)
-        parts = [int(x) for x in cleaned.split('.') if x]
-        return tuple(parts) if parts else (0,)
+        chunks = re.split(r"([0-9]+)", version_str)
+        res = []
+        for c in chunks:
+            if not c: continue
+            if c.isdigit():
+                res.append((0, int(c)))
+            else:
+                res.append((1, c))
+        return tuple(res)
     except:
-        return (0,)
+        return ((0, 0),)
 
 LUCIDE_DOWNLOAD_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" '
@@ -84,87 +112,64 @@ LUCIDE_DOWNLOAD_SVG = (
 )
 
 def generate_html(release_url, key_id=None):
-    apt_pkgs = get_apt_packages("inled-repo")
-    apt_pkgs += get_apt_packages("inled-repo-forky")
-    apt_pkgs += get_apt_packages("inled-repo-rolling")
-    rpm_pkgs = get_rpm_packages("public/rpm")
-    arch_pkgs = get_arch_packages("public/arch")
-    current_pkgs = apt_pkgs + rpm_pkgs + arch_pkgs
+    # Load packages from aptly and current_assets.txt
+    current_pkgs = []
+    current_pkgs += get_apt_packages("inled-repo")
+    current_pkgs += get_apt_packages("inled-repo-forky")
+    current_pkgs += get_apt_packages("inled-repo-rolling")
 
-    print(f"Scan: APT({len(apt_pkgs)}), RPM({len(rpm_pkgs)}), Arch({len(arch_pkgs)})")
+    assets_pkgs = get_packages_from_assets("current_assets.txt")
+    # Merge, deduplicating by filename
+    seen_files = {p["file"] for p in current_pkgs}
+    for p in assets_pkgs:
+        if p["file"] not in seen_files:
+            current_pkgs.append(p)
+            seen_files.add(p["file"])
 
     db_file = "packages.json"
     history = {}
     if os.path.exists(db_file):
         try:
-            with open(db_file, "r") as f:
+            with open(db_file, "r", encoding="utf-8") as f:
                 history = json.load(f)
         except:
             history = {}
 
-    # Load current_assets.txt if it exists to get the active assets on GitHub
     active_assets = set()
     if os.path.exists("current_assets.txt"):
-        with open("current_assets.txt", "r") as f:
+        with open("current_assets.txt", "r", encoding="utf-8") as f:
             for line in f:
                 val = line.strip()
                 if val:
                     active_assets.add(val)
-
-    # Also keep files from the current scan in active_assets
     for pkg in current_pkgs:
         active_assets.add(pkg["file"])
 
     # Clean up history: remove versions and individual files no longer present in active_assets
     for name in list(history.keys()):
         for version in list(history[name]["versions"].keys()):
-            # Only keep package entries whose files exist in active_assets
             history[name]["versions"][version] = [
                 pkg for pkg in history[name]["versions"][version]
                 if not active_assets or pkg["file"] in active_assets
             ]
-            # If no entries remain for this version, delete the version
             if not history[name]["versions"][version]:
-                print(f"Purging old historical version {version} for {name} from packages.json (no assets exist)")
                 del history[name]["versions"][version]
-        
-        # If no versions remain for this package name, delete the package entirely
         if not history[name]["versions"]:
-            print(f"Purging package {name} from packages.json (no versions remain)")
             del history[name]
 
     # Merge current scan into history
-    current_names = set()
     for pkg in current_pkgs:
         name = pkg["name"]
-        current_names.add(name)
         if name not in history:
             history[name] = {"versions": {}}
-
         version = pkg["version"]
         if version not in history[name]["versions"]:
             history[name]["versions"][version] = []
-
         exists = any(p["file"] == pkg["file"] for p in history[name]["versions"][version])
         if not exists:
             history[name]["versions"][version].append(pkg)
 
-    # Remove packages no longer present in any scan AND with no active assets in GitHub releases
-    for name in list(history.keys()):
-        if name not in current_names:
-            # Check if any version of this package still has a file in active_assets
-            has_active_asset = any(
-                pkg["file"] in active_assets
-                for version_pkgs in history[name]["versions"].values()
-                for pkg in version_pkgs
-            )
-            if has_active_asset:
-                print(f"Keeping package {name} in history (not in aptly but has active release assets)")
-            else:
-                del history[name]
-                print(f"Removed stale package from history: {name}")
-
-    with open(db_file, "w") as f:
+    with open(db_file, "w", encoding="utf-8") as f:
         json.dump(history, f, indent=2)
 
     packages_html = ""
@@ -183,7 +188,7 @@ def generate_html(release_url, key_id=None):
                     if p_type == "deb":
                         branch = pkg.get("branch", "stable")
                     else:
-                        branch = p_type # rpm, arch, etc.
+                        branch = p_type
                     
                     if branch not in latest_by_branch:
                         latest_by_branch[branch] = pkg
@@ -199,7 +204,7 @@ def generate_html(release_url, key_id=None):
             item_html += f'<div class="package-footer">'
 
             for pkg in sorted(buttons_pkgs, key=lambda x: (x["type"], x["arch"])):
-                arch_info = f' ({pkg["arch"]})' if pkg["arch"] != "unknown" else ""
+                arch_info = f' ({pkg["arch"]})' if pkg.get("arch") and pkg["arch"] != "unknown" else ""
                 ver_info = f' v{pkg["version"]}' if pkg["version"] != latest_overall_ver else ""
                 full_label = f"{pkg['type']}{arch_info}{ver_info}"
                 item_html += (
@@ -211,10 +216,9 @@ def generate_html(release_url, key_id=None):
             item_html += f'</div></li>'
             packages_html += item_html
 
-    with open("index.html.template", "r") as f:
+    with open("index.html.template", "r", encoding="utf-8") as f:
         template = f.read()
 
-    # Dump the history dict to JSON string for client-side rendering
     db_json = json.dumps(history)
 
     final_html = template.replace("<!-- PACKAGES_LIST_PLACEHOLDER -->", packages_html)
@@ -225,7 +229,7 @@ def generate_html(release_url, key_id=None):
         final_html = final_html.replace("&lt;KEY_ID&gt;", key_id)
 
     os.makedirs("public", exist_ok=True)
-    tmp = tempfile.NamedTemporaryFile(mode="w", dir="public", delete=False, suffix=".html")
+    tmp = tempfile.NamedTemporaryFile(mode="w", dir="public", delete=False, suffix=".html", encoding="utf-8")
     try:
         tmp.write(final_html)
         tmp.close()

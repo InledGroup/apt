@@ -42,7 +42,7 @@ for dist in stable forky rolling; do
     # Purge old versions that are no longer in current_assets.txt or incoming/
     if [ -f "current_assets.txt" ] && [ -s "current_assets.txt" ]; then
         echo "🧹 Checking for stale packages in $dist_repo against current_assets.txt..."
-        aptly -config=aptly.conf repo show -with-packages "$dist_repo" | grep -A 999999 "Packages:" | tail -n +2 | sed 's/^[[:space:]]*//' | while read -r pkg_spec; do
+        aptly -config=aptly.conf repo show -with-packages "$dist_repo" 2>/dev/null | grep -A 999999 "Packages:" | tail -n +2 | sed 's/^[[:space:]]*//' | while read -r pkg_spec; do
             if [ -n "$pkg_spec" ]; then
                 pkg_name=$(echo "$pkg_spec" | cut -d'_' -f1)
                 pkg_version=$(echo "$pkg_spec" | cut -d'_' -f2)
@@ -51,7 +51,7 @@ for dist in stable forky rolling; do
                 filename="${pkg_name}_${pkg_version}_${pkg_arch}.deb"
                 
                 if ! grep -Fxq "$filename" current_assets.txt && [ ! -f "incoming/$filename" ]; then
-                    echo "🗑️ Stale package $filename not found in release assets or incoming. Purging from $dist_repo..."
+                    echo "🗑️ Stale package $filename not found in active release assets or incoming. Purging from $dist_repo..."
                     aptly -config=aptly.conf repo remove "$dist_repo" "Name (= $pkg_name), Version (= $pkg_version), Architecture (= $pkg_arch)" || true
                 fi
             fi
@@ -83,10 +83,8 @@ for dist in stable forky rolling; do
 
     if [ ${#matching_debs[@]} -gt 0 ]; then
         # Purge existing versions of the matching packages from the repo first
-        # to ensure that we don't leave old versions with different version formats (like +rolling) side-by-side.
         for deb in "${matching_debs[@]}"; do
-            # Extract package name from deb file using dpkg-deb (safe and exact)
-            pkg_name=$(dpkg-deb -f "$deb" Package)
+            pkg_name=$(dpkg-deb -f "$deb" Package 2>/dev/null || echo "")
             if [ -n "$pkg_name" ]; then
                 echo "Purging old versions of $pkg_name from $dist_repo..."
                 aptly -config=aptly.conf repo remove "$dist_repo" "Name (= $pkg_name)" || true
@@ -106,6 +104,10 @@ for dist in stable forky rolling; do
         aptly publish update -force-overwrite -config=aptly.conf "$dist" filesystem:public:
     fi
 done
+
+# Cleanup Aptly DB to keep cache lightweight
+echo "Cleaning up unreferenced Aptly DB entries..."
+aptly -config=aptly.conf db cleanup || true
 
 # Patch Packages files to point to release URL, then regenerate Release signatures
 if [ -n "$RELEASE_URL" ]; then
@@ -170,53 +172,28 @@ if [ -n "$RELEASE_URL" ] && [ -f "$REDIRECTS_FILE" ]; then
     cat "$REDIRECTS_FILE" >> "$REDIRECTS_TMP"
 fi
 
-# Process RPMs
-if [ -d "public/rpm" ]; then
-    mkdir -p incoming
-    shopt -s nullglob
-    for rpm_file in public/rpm/*.rpm; do
-        shopt -u nullglob
-        filename=$(basename "$rpm_file")
-        echo "/rpm/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
-        cp "$rpm_file" incoming/
-        rm "$rpm_file"
-    done
-    shopt -u nullglob
-fi
-
-# Process Arch packages
-if [ -d "public/arch" ]; then
-    mkdir -p incoming
-    shopt -s nullglob
-    for pkg_file in public/arch/*.pkg.tar.*; do
-        shopt -u nullglob
-        if [[ "$pkg_file" == *.sig ]]; then continue; fi
-        filename=$(basename "$pkg_file")
-        echo "/arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
-        cp "$pkg_file" incoming/
-        rm "$pkg_file"
-        if [ -f "$pkg_file.sig" ]; then
-            sig_filename="$filename.sig"
-            echo "/arch/$sig_filename $RELEASE_URL/$sig_filename 302" >> "$REDIRECTS_TMP"
-            cp "$pkg_file.sig" incoming/
-            rm "$pkg_file.sig"
-        fi
-    done
-    shopt -u nullglob
-fi
-
-# Generate redirects for arch packages in current_assets.txt that weren't downloaded this run
-# (e.g. large files that timed out during gh release download)
+# Generate redirects for all active RPM and Arch packages from current_assets.txt + incoming
 if [ -f "current_assets.txt" ]; then
     while IFS= read -r asset; do
-        if [[ "$asset" == *.pkg.tar.* ]] && [[ "$asset" != *.sig ]]; then
-            echo "/arch/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
-        fi
-        if [[ "$asset" == *.pkg.tar.*.sig ]]; then
+        [ -n "$asset" ] || continue
+        if [[ "$asset" == *.rpm ]]; then
+            echo "/rpm/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
+        elif [[ "$asset" == *.pkg.tar.* ]]; then
             echo "/arch/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
         fi
     done < current_assets.txt
 fi
+
+shopt -s nullglob
+for rpm_file in incoming/*.rpm; do
+    filename=$(basename "$rpm_file")
+    echo "/rpm/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
+done
+for pkg_file in incoming/*.pkg.tar.*; do
+    filename=$(basename "$pkg_file")
+    echo "/arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
+done
+shopt -u nullglob
 
 # Deduplicate and atomically write _redirects
 sort -u "$REDIRECTS_TMP" > "$REDIRECTS_FILE"

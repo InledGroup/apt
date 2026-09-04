@@ -205,12 +205,6 @@ shopt -u nullglob
 sort -u "$REDIRECTS_TMP" > "$REDIRECTS_FILE"
 rm -f "$REDIRECTS_TMP"
 
-# Append wildcard fallback redirects (for any direct or subpath asset requests not explicitly listed)
-if [ -n "$RELEASE_URL" ]; then
-    echo "/rpm/* $RELEASE_URL/:splat 302" >> "$REDIRECTS_FILE"
-    echo "/arch/* $RELEASE_URL/:splat 302" >> "$REDIRECTS_FILE"
-fi
-
 # Create _headers for Cloudflare Pages
 cat <<EOF > public/_headers
 /*

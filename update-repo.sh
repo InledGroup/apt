@@ -58,6 +58,44 @@ for dist in stable forky rolling; do
         done
     fi
 
+    # Download active deb packages for this distribution that are missing from $dist_repo and incoming
+    if [ -f "current_assets.txt" ]; then
+        base_release_url="${RELEASE_URL:-https://github.com/InledGroup/apt/releases/download/packages}"
+        indexed_pkg_specs=""
+        if aptly -config=aptly.conf repo show "$dist_repo" >/dev/null 2>&1; then
+            indexed_pkg_specs=$(aptly -config=aptly.conf repo show -with-packages "$dist_repo" 2>/dev/null | grep -A 999999 "Packages:" | tail -n +2 | sed 's/^[[:space:]]*//' || true)
+        fi
+
+        while IFS= read -r asset; do
+            [ -n "$asset" ] || continue
+            if [[ "$asset" == *.deb ]]; then
+                asset_dist="stable"
+                if [[ "$asset" == *"deb14"* ]]; then
+                    asset_dist="forky"
+                elif [[ "$asset" == *"rolling"* ]]; then
+                    asset_dist="rolling"
+                fi
+
+                if [ "$asset_dist" = "$dist" ]; then
+                    pkg_stem="${asset%.deb}"
+                    pkg_name=$(echo "$pkg_stem" | cut -d'_' -f1)
+                    pkg_version=$(echo "$pkg_stem" | cut -d'_' -f2)
+                    pkg_arch=$(echo "$pkg_stem" | cut -d'_' -f3)
+
+                    if [ ! -f "incoming/$asset" ]; then
+                        if ! echo "$indexed_pkg_specs" | grep -Fxq "${pkg_name}_${pkg_version}_${pkg_arch}"; then
+                            echo "📥 Downloading active Debian package missing from $dist_repo: $asset..."
+                            if ! wget -q "$base_release_url/$asset" -O "incoming/$asset"; then
+                                echo "⚠️ Failed to download $base_release_url/$asset"
+                                rm -f "incoming/$asset"
+                            fi
+                        fi
+                    fi
+                fi
+            fi
+        done < current_assets.txt
+    fi
+
     # Add matching packages from 'incoming' that belong to this distribution
     matching_debs=()
     shopt -s nullglob

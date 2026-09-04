@@ -19,6 +19,23 @@ echo "Using GPG fingerprint: $GPG_FINGERPRINT"
 # Ensure directories
 mkdir -p "$RPM_DIR"
 
+# Check if there are missing active RPM packages to download
+if [ -f "current_assets.txt" ]; then
+    base_release_url="${RELEASE_URL:-https://github.com/InledGroup/apt/releases/download/packages}"
+    while IFS= read -r asset; do
+        [ -n "$asset" ] || continue
+        if [[ "$asset" == *.rpm ]]; then
+            if [ ! -f "$RPM_DIR/$asset" ] && [ ! -f "incoming/$asset" ]; then
+                echo "📥 Downloading active RPM package: $asset..."
+                if ! wget -q "$base_release_url/$asset" -O "incoming/$asset"; then
+                    echo "⚠️ Failed to download $base_release_url/$asset"
+                    rm -f "incoming/$asset"
+                fi
+            fi
+        fi
+    done < current_assets.txt
+fi
+
 # Check if there are new RPM packages in incoming
 shopt -s nullglob
 incoming_rpms=(incoming/*.rpm)

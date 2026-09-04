@@ -112,23 +112,14 @@ if [ ${#PKGS_TO_ADD[@]} -gt 0 ]; then
     repo-add --sign --key "$GPG_FINGERPRINT" "$DB_FILE" "${PKGS_TO_ADD[@]}"
 fi
 
-# 4. Fix symlinks for Cloudflare Pages
+# 4. Fix symlinks for Cloudflare Pages (convert all symlinks to real files)
 echo "Fixing symlinks for Cloudflare Pages..."
-for link in "$ARCH_DIR/$REPO_NAME.db" "$ARCH_DIR/$REPO_NAME.files"; do
+for link in "$ARCH_DIR"/*; do
     if [ -L "$link" ]; then
         target=$(readlink -f "$link")
         echo "Converting symlink to real file: $link -> $target"
         rm "$link"
         cp "$target" "$link"
-    fi
-done
-
-# 5. Ensure .db.sig and .files.sig exist as regular files
-for sig_src in "$ARCH_DIR/$REPO_NAME.db.tar.gz.sig" "$ARCH_DIR/$REPO_NAME.files.tar.gz.sig"; do
-    if [ -f "$sig_src" ]; then
-        sig_dst="${sig_src%.tar.gz.sig}.sig"
-        echo "Updating $sig_dst for pacman compatibility..."
-        cp -f "$sig_src" "$sig_dst"
     fi
 done
 

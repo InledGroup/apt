@@ -25,7 +25,9 @@ def parse_version_key(v):
     return res
 
 def get_deb_dist(version):
-    if "deb14" in version:
+    if "unstable" in version:
+        return "unstable"
+    elif "deb14" in version:
         return "forky"
     elif "rolling" in version:
         return "rolling"

@@ -11,7 +11,9 @@ RPM_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d.*?)\.(?P<arch>x86_64|aarch64
 ARCH_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d[^-]*)-(?P<pkgrel>\d+)-(?P<arch>[^.]+)\.pkg\.tar\..+$")
 
 def get_deb_dist(version):
-    if "deb14" in version:
+    if "unstable" in version:
+        return "unstable"
+    elif "deb14" in version:
         return "forky"
     elif "rolling" in version:
         return "rolling"
@@ -30,7 +32,9 @@ def get_apt_packages(repo_name):
 
         if start_index != -1:
             branch = "stable"
-            if "forky" in repo_name:
+            if "unstable" in repo_name:
+                branch = "unstable"
+            elif "forky" in repo_name:
                 branch = "forky"
             elif "rolling" in repo_name:
                 branch = "rolling"
@@ -115,6 +119,7 @@ def generate_html(release_url, key_id=None):
     # Load packages from aptly and current_assets.txt
     current_pkgs = []
     current_pkgs += get_apt_packages("inled-repo")
+    current_pkgs += get_apt_packages("inled-repo-unstable")
     current_pkgs += get_apt_packages("inled-repo-forky")
     current_pkgs += get_apt_packages("inled-repo-rolling")
 

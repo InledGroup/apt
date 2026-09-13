@@ -17,7 +17,7 @@ on:
         required: false
         default: "false"
       branch:
-        description: "Target branch/distribution (stable, forky, rolling)"
+        description: "Target branch/distribution (stable, unstable, forky, rolling)"
         required: false
         default: "stable"
 

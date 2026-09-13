@@ -36,9 +36,10 @@ done
 sync_arch_repo() {
     local target_dir="$1"
     local target_arch="$2" # "x86_64" or "aarch64"
+    local channel="${3:-all}" # "stable", "unstable", or "all"
     local db_file="$target_dir/$REPO_NAME.db.tar.gz"
 
-    echo "--- Syncing Arch repo for $target_arch in '$target_dir' ---"
+    echo "--- Syncing Arch repo for $target_arch ($channel) in '$target_dir' ---"
     mkdir -p "$target_dir"
 
     local indexed_filenames=()
@@ -71,6 +72,10 @@ sync_arch_repo() {
             [ -n "$asset" ] || continue
             if [[ "$asset" == *.pkg.tar.* ]] && [[ "$asset" != *.sig ]]; then
                 if [[ "$asset" == *"-${target_arch}.pkg.tar."* ]] || [[ "$asset" == *"-any.pkg.tar."* ]]; then
+                    # Filter by channel if specified
+                    if [ "$channel" = "stable" ] && [[ "$asset" == *"-unstable-"* ]]; then
+                        continue
+                    fi
                     local is_indexed=false
                     for ifn in "${indexed_filenames[@]}"; do
                         if [ "$ifn" = "$asset" ]; then
@@ -113,6 +118,9 @@ sync_arch_repo() {
     for pkg in "${all_incoming[@]}"; do
         if [[ "$pkg" == *.sig ]]; then continue; fi
         if [[ "$pkg" == *"-${target_arch}.pkg.tar."* ]] || [[ "$pkg" == *"-any.pkg.tar."* ]]; then
+            if [ "$channel" = "stable" ] && [[ "$pkg" == *"-unstable-"* ]]; then
+                continue
+            fi
             pkgs_to_add+=("$pkg")
         fi
     done
@@ -132,14 +140,21 @@ sync_arch_repo() {
     done
 }
 
-# 2. Build and sync x86_64 repository at public/arch and public/arch/x86_64
-sync_arch_repo "public/arch" "x86_64"
+# 2. Build and sync stable Arch repository
+mkdir -p public/arch/stable/x86_64 public/arch/stable/aarch64
+sync_arch_repo "public/arch/stable/x86_64" "x86_64" "stable"
+sync_arch_repo "public/arch/stable/aarch64" "aarch64" "stable"
 
-# Mirror public/arch files into public/arch/x86_64
-echo "Mirroring public/arch database to public/arch/x86_64..."
-cp -f public/arch/inled.* public/arch/x86_64/ 2>/dev/null || true
+# Mirror stable to public/arch and public/arch/x86_64 / public/arch/aarch64 for compatibility
+echo "Mirroring public/arch/stable to public/arch and public/arch/x86_64..."
+mkdir -p public/arch/x86_64 public/arch/aarch64
+cp -f public/arch/stable/x86_64/inled.* public/arch/ 2>/dev/null || true
+cp -f public/arch/stable/x86_64/inled.* public/arch/x86_64/ 2>/dev/null || true
+cp -f public/arch/stable/aarch64/inled.* public/arch/aarch64/ 2>/dev/null || true
 
-# 3. Build and sync aarch64 repository at public/arch/aarch64
-sync_arch_repo "public/arch/aarch64" "aarch64"
+# 3. Build and sync unstable Arch repository
+mkdir -p public/arch/unstable/x86_64 public/arch/unstable/aarch64
+sync_arch_repo "public/arch/unstable/x86_64" "x86_64" "unstable"
+sync_arch_repo "public/arch/unstable/aarch64" "aarch64" "unstable"
 
-echo "Arch Linux repositories updated successfully."
+echo "Arch Linux repositories (stable & unstable) updated successfully."

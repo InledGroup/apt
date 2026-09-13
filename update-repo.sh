@@ -25,9 +25,9 @@ echo "Using GPG key: $GPG_KEY_ID (fingerprint: $GPG_FINGERPRINT)"
 # Ensure directories
 mkdir -p .aptly public
 
-# Loop through all three distributions to sync and publish/update them together.
+# Loop through all distributions to sync and publish/update them together.
 # This ensures Cloudflare Pages deployment always gets a complete set of files for all branches.
-for dist in stable forky rolling; do
+for dist in stable unstable forky rolling; do
     dist_repo="inled-repo"
     if [ "$dist" != "stable" ]; then
         dist_repo="inled-repo-$dist"
@@ -36,7 +36,7 @@ for dist in stable forky rolling; do
     # Initialize repository if needed
     if ! aptly -config=aptly.conf repo show "$dist_repo" > /dev/null 2>&1; then
         echo "Creating repository $dist_repo..."
-        aptly -config=aptly.conf repo create -comment="Inled APT Repository" -distribution="$dist" -component="$COMPONENT" "$dist_repo"
+        aptly -config=aptly.conf repo create -comment="Inled APT Repository ($dist)" -distribution="$dist" -component="$COMPONENT" "$dist_repo"
     fi
 
     # Purge old versions that are no longer in current_assets.txt or incoming/
@@ -101,7 +101,13 @@ for dist in stable forky rolling; do
     shopt -s nullglob
     for deb in incoming/*.deb; do
         filename=$(basename "$deb")
-        if [ "$dist" = "forky" ]; then
+        if [ "$dist" = "unstable" ]; then
+            if [[ "$filename" == *"unstable"* ]] || [[ "$filename" == *"rolling"* ]]; then
+                matching_debs+=("$deb")
+            elif [ "$DISTRIBUTION" = "unstable" ]; then
+                matching_debs+=("$deb")
+            fi
+        elif [ "$dist" = "forky" ]; then
             if [[ "$filename" == *"deb14"* ]]; then
                 matching_debs+=("$deb")
             fi
@@ -110,9 +116,9 @@ for dist in stable forky rolling; do
                 matching_debs+=("$deb")
             fi
         else # stable
-            if [[ "$filename" == *"deb13"* ]]; then
+            if [[ "$filename" == *"deb13"* ]] || [[ "$filename" == *"stable"* ]]; then
                 matching_debs+=("$deb")
-            elif [[ "$filename" != *"deb14"* ]] && [[ "$filename" != *"rolling"* ]]; then
+            elif [[ "$filename" != *"deb14"* ]] && [[ "$filename" != *"rolling"* ]] && [[ "$filename" != *"unstable"* ]]; then
                 matching_debs+=("$deb")
             fi
         fi
@@ -211,16 +217,34 @@ if [ -n "$RELEASE_URL" ] && [ -f "$REDIRECTS_FILE" ]; then
 fi
 
 # Generate redirects for all active RPM and Arch packages from current_assets.txt + incoming
+emit_arch_redirects() {
+    local asset="$1"
+    local rel_url="$2"
+    echo "/arch/$asset $rel_url/$asset 302" >> "$REDIRECTS_TMP"
+    echo "/arch/x86_64/$asset $rel_url/$asset 302" >> "$REDIRECTS_TMP"
+    echo "/arch/aarch64/$asset $rel_url/$asset 302" >> "$REDIRECTS_TMP"
+    echo "/arch/stable/x86_64/$asset $rel_url/$asset 302" >> "$REDIRECTS_TMP"
+    echo "/arch/stable/aarch64/$asset $rel_url/$asset 302" >> "$REDIRECTS_TMP"
+    echo "/arch/unstable/x86_64/$asset $rel_url/$asset 302" >> "$REDIRECTS_TMP"
+    echo "/arch/unstable/aarch64/$asset $rel_url/$asset 302" >> "$REDIRECTS_TMP"
+    if [[ "$asset" != *.sig ]]; then
+        echo "/arch/$asset.sig $rel_url/$asset.sig 302" >> "$REDIRECTS_TMP"
+        echo "/arch/x86_64/$asset.sig $rel_url/$asset.sig 302" >> "$REDIRECTS_TMP"
+        echo "/arch/aarch64/$asset.sig $rel_url/$asset.sig 302" >> "$REDIRECTS_TMP"
+        echo "/arch/stable/x86_64/$asset.sig $rel_url/$asset.sig 302" >> "$REDIRECTS_TMP"
+        echo "/arch/stable/aarch64/$asset.sig $rel_url/$asset.sig 302" >> "$REDIRECTS_TMP"
+        echo "/arch/unstable/x86_64/$asset.sig $rel_url/$asset.sig 302" >> "$REDIRECTS_TMP"
+        echo "/arch/unstable/aarch64/$asset.sig $rel_url/$asset.sig 302" >> "$REDIRECTS_TMP"
+    fi
+}
+
 if [ -f "current_assets.txt" ]; then
     while IFS= read -r asset; do
         [ -n "$asset" ] || continue
         if [[ "$asset" == *.rpm ]]; then
             echo "/rpm/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
         elif [[ "$asset" == *.pkg.tar.* ]]; then
-            echo "/arch/$asset $RELEASE_URL/$asset 302" >> "$REDIRECTS_TMP"
-            if [[ "$asset" != *.sig ]]; then
-                echo "/arch/$asset.sig $RELEASE_URL/$asset.sig 302" >> "$REDIRECTS_TMP"
-            fi
+            emit_arch_redirects "$asset" "$RELEASE_URL"
         fi
     done < current_assets.txt
 fi
@@ -232,10 +256,7 @@ for rpm_file in incoming/*.rpm; do
 done
 for pkg_file in incoming/*.pkg.tar.*; do
     filename=$(basename "$pkg_file")
-    echo "/arch/$filename $RELEASE_URL/$filename 302" >> "$REDIRECTS_TMP"
-    if [[ "$filename" != *.sig ]]; then
-        echo "/arch/$filename.sig $RELEASE_URL/$filename.sig 302" >> "$REDIRECTS_TMP"
-    fi
+    emit_arch_redirects "$filename" "$RELEASE_URL"
 done
 shopt -u nullglob
 

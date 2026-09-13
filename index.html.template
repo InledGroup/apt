@@ -331,6 +331,7 @@
             display: inline-block;
         }
         .badge-stable { background: #deebff; color: #0747a6; }
+        .badge-unstable { background: #ffebe6; color: #bf2600; }
         .badge-forky { background: #e3fcef; color: #006644; }
         .badge-rolling { background: #ffebe6; color: #bf2600; }
         .badge-other { background: #f4f5f7; color: #5e6c84; }
@@ -355,7 +356,7 @@
     <div class="container">
         <header>
             <img src="https://hosted.inled.es/inled-logo-full.png" alt="Inled Logo" class="logo">
-            <p class="description">Official package repository for Inled applications.</p>
+            <p class="description">Official package repository for Inled applications and Pulsar OS.</p>
         </header>
 
         <div class="alert alert-warning page-alert">
@@ -372,8 +373,11 @@
             <pre><code># 1. Download the GPG key
 wget -qO- https://apt.inled.es/archive.key | gpg --dearmor | sudo tee /usr/share/keyrings/inled-archive-keyring.gpg > /dev/null
 
-# 2. Add the repository
+# 2. Add the repository (choose 'stable' or 'unstable')
+# For Stable:
 echo "deb [signed-by=/usr/share/keyrings/inled-archive-keyring.gpg] https://apt.inled.es stable main" | sudo tee /etc/apt/sources.list.d/inled.list
+# Or for Unstable / Testing:
+# echo "deb [signed-by=/usr/share/keyrings/inled-archive-keyring.gpg] https://apt.inled.es unstable main" | sudo tee /etc/apt/sources.list.d/inled.list
 
 # 3. Update and install
 sudo apt update</code></pre>
@@ -400,13 +404,18 @@ sudo dnf install &lt;package&gt;</code></pre>
 
             <h3>Arch Linux (Pacman)</h3>
             <pre><code># 1. Add the repository to /etc/pacman.conf
-#    (appends the block below automatically; skips if it already exists)
+#    (For Stable branch, default):
 grep -q '^\[inled\]' /etc/pacman.conf || sudo tee -a /etc/pacman.conf &lt;&lt;EOF
 
 [inled]
 SigLevel = PackageRequired
-Server = https://apt.inled.es/arch/
+Server = https://apt.inled.es/arch/stable/\$arch
 EOF
+
+# (Or for Unstable branch):
+# [inled-unstable]
+# SigLevel = PackageRequired
+# Server = https://apt.inled.es/arch/unstable/\$arch
 
 # 2. Import and sign the GPG key
 curl -s https://apt.inled.es/archive.key | sudo pacman-key -a -
@@ -429,9 +438,8 @@ sudo pacman -S &lt;package&gt;</code></pre>
             
             <div class="branch-selector" id="branch-selector">
                 <button class="branch-tab active" data-branch="all">All Branches</button>
-                <button class="branch-tab" data-branch="stable">Stable (Trixie)</button>
-                <button class="branch-tab" data-branch="forky">Forky (Testing)</button>
-                <button class="branch-tab" data-branch="rolling">Rolling Release</button>
+                <button class="branch-tab" data-branch="stable">Stable</button>
+                <button class="branch-tab" data-branch="unstable">Unstable</button>
             </div>
 
             <input type="text" id="search" placeholder="Search packages..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box;">
@@ -468,9 +476,10 @@ sudo pacman -S &lt;package&gt;</code></pre>
 
                 function getBranchBadgeHtml(branch) {
                     if (branch === 'stable') return '<span class="badge badge-stable">stable</span>';
+                    if (branch === 'unstable') return '<span class="badge badge-unstable">unstable</span>';
                     if (branch === 'forky') return '<span class="badge badge-forky">forky</span>';
                     if (branch === 'rolling') return '<span class="badge badge-rolling">rolling</span>';
-                    return '<span class="badge badge-other">other</span>';
+                    return '<span class="badge badge-other">' + branch + '</span>';
                 }
 
                 // Simple version comparison helper (SemVer fallback)

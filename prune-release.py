@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 DEB_RE = re.compile(r"^(?P<name>[^_]+)_(?P<version>[^_]+)_(?P<arch>[^_]+)\.deb$")
 RPM_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d.*?)\.(?P<arch>x86_64|aarch64|arm64|noarch|i386|i686|armv7hl)\.rpm$")
-ARCH_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d[^-]*)-(?P<pkgrel>\d+)-(?P<arch>[^.]+)\.pkg\.tar\..+$")
+ARCH_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d[^-]*)-(?P<pkgrel>[^-]+)-(?P<arch>[^.]+)\.pkg\.tar\..+$")
 
 def parse_version_key(v):
     chunks = re.split(r"([0-9]+)", v)
@@ -24,14 +24,17 @@ def parse_version_key(v):
             res.append((1, c))
     return res
 
-def get_deb_dist(version):
-    if "unstable" in version:
+def get_package_branch(version_or_filename):
+    if "unstable" in version_or_filename:
         return "unstable"
-    elif "deb14" in version:
+    elif "deb14" in version_or_filename or "forky" in version_or_filename:
         return "forky"
-    elif "rolling" in version:
+    elif "rolling" in version_or_filename:
         return "rolling"
     return "stable"
+
+def get_deb_dist(version):
+    return get_package_branch(version)
 
 def parse_package_filename(filename):
     if filename == "packages.json" or filename.endswith(".sig"):
@@ -43,25 +46,27 @@ def parse_package_filename(filename):
             "name": m.group("name"),
             "version": ver,
             "arch": m.group("arch"),
-            "dist": get_deb_dist(ver),
+            "dist": get_package_branch(ver),
             "file": filename
         }
     elif m := RPM_RE.match(filename):
+        ver = m.group("version")
         return {
             "type": "rpm",
             "name": m.group("name"),
-            "version": m.group("version"),
+            "version": ver,
             "arch": m.group("arch"),
-            "dist": "rpm",
+            "dist": get_package_branch(filename),
             "file": filename
         }
     elif m := ARCH_RE.match(filename):
+        ver = m.group("version")
         return {
             "type": "arch",
             "name": m.group("name"),
-            "version": m.group("version"),
+            "version": ver,
             "arch": m.group("arch"),
-            "dist": "arch",
+            "dist": get_package_branch(filename),
             "file": filename
         }
     return {"type": "junk", "name": filename, "version": "0", "arch": "unknown", "dist": "junk", "file": filename}

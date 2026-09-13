@@ -8,16 +8,19 @@ import tempfile
 
 DEB_RE = re.compile(r"^(?P<name>[^_]+)_(?P<version>[^_]+)_(?P<arch>[^_]+)\.deb$")
 RPM_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d.*?)\.(?P<arch>x86_64|aarch64|arm64|noarch|i386|i686|armv7hl)\.rpm$")
-ARCH_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d[^-]*)-(?P<pkgrel>\d+)-(?P<arch>[^.]+)\.pkg\.tar\..+$")
+ARCH_RE = re.compile(r"^(?P<name>.+?)-(?P<version>\d[^-]*)-(?P<pkgrel>[^-]+)-(?P<arch>[^.]+)\.pkg\.tar\..+$")
 
-def get_deb_dist(version):
-    if "unstable" in version:
+def get_package_branch(version_or_filename):
+    if "unstable" in version_or_filename:
         return "unstable"
-    elif "deb14" in version:
+    elif "deb14" in version_or_filename or "forky" in version_or_filename:
         return "forky"
-    elif "rolling" in version:
+    elif "rolling" in version_or_filename:
         return "rolling"
     return "stable"
+
+def get_deb_dist(version):
+    return get_package_branch(version)
 
 def get_apt_packages(repo_name):
     packages = []
@@ -71,6 +74,7 @@ def get_packages_from_assets(assets_file):
                     "version": m.group("version"),
                     "arch": m.group("arch"),
                     "type": "rpm",
+                    "branch": get_package_branch(filename),
                     "file": filename
                 })
             elif m := ARCH_RE.match(filename):
@@ -79,6 +83,7 @@ def get_packages_from_assets(assets_file):
                     "version": m.group("version"),
                     "arch": m.group("arch"),
                     "type": "arch",
+                    "branch": get_package_branch(filename),
                     "file": filename
                 })
             elif m := DEB_RE.match(filename):
@@ -88,7 +93,7 @@ def get_packages_from_assets(assets_file):
                     "version": ver,
                     "arch": m.group("arch"),
                     "type": "deb",
-                    "branch": get_deb_dist(ver),
+                    "branch": get_package_branch(ver),
                     "file": filename
                 })
     return packages

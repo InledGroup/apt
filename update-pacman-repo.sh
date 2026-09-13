@@ -73,7 +73,7 @@ sync_arch_repo() {
             if [[ "$asset" == *.pkg.tar.* ]] && [[ "$asset" != *.sig ]]; then
                 if [[ "$asset" == *"-${target_arch}.pkg.tar."* ]] || [[ "$asset" == *"-any.pkg.tar."* ]]; then
                     # Filter by channel if specified
-                    if [ "$channel" = "stable" ] && [[ "$asset" == *"-unstable-"* ]]; then
+                    if [ "$channel" = "stable" ] && [[ "$asset" == *"unstable"* ]]; then
                         continue
                     fi
                     local is_indexed=false
@@ -118,7 +118,7 @@ sync_arch_repo() {
     for pkg in "${all_incoming[@]}"; do
         if [[ "$pkg" == *.sig ]]; then continue; fi
         if [[ "$pkg" == *"-${target_arch}.pkg.tar."* ]] || [[ "$pkg" == *"-any.pkg.tar."* ]]; then
-            if [ "$channel" = "stable" ] && [[ "$pkg" == *"-unstable-"* ]]; then
+            if [ "$channel" = "stable" ] && [[ "$pkg" == *"unstable"* ]]; then
                 continue
             fi
             pkgs_to_add+=("$pkg")

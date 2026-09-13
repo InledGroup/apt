@@ -158,10 +158,13 @@ def generate_html(release_url, key_id=None):
     # Clean up history: remove versions and individual files no longer present in active_assets
     for name in list(history.keys()):
         for version in list(history[name]["versions"].keys()):
-            history[name]["versions"][version] = [
-                pkg for pkg in history[name]["versions"][version]
-                if not active_assets or pkg["file"] in active_assets
-            ]
+            cleaned_pkgs = []
+            for pkg in history[name]["versions"][version]:
+                if not active_assets or pkg["file"] in active_assets:
+                    if "branch" not in pkg or not pkg["branch"]:
+                        pkg["branch"] = get_package_branch(pkg.get("file", pkg.get("version", "")))
+                    cleaned_pkgs.append(pkg)
+            history[name]["versions"][version] = cleaned_pkgs
             if not history[name]["versions"][version]:
                 del history[name]["versions"][version]
         if not history[name]["versions"]:
@@ -175,6 +178,8 @@ def generate_html(release_url, key_id=None):
         version = pkg["version"]
         if version not in history[name]["versions"]:
             history[name]["versions"][version] = []
+        if "branch" not in pkg or not pkg["branch"]:
+            pkg["branch"] = get_package_branch(pkg.get("file", pkg.get("version", "")))
         exists = any(p["file"] == pkg["file"] for p in history[name]["versions"][version])
         if not exists:
             history[name]["versions"][version].append(pkg)
@@ -190,21 +195,20 @@ def generate_html(release_url, key_id=None):
             versions = sorted(history[name]["versions"].keys(), key=version_key, reverse=True)
             latest_overall_ver = versions[0]
 
-            # Group by branch/dist and keep only the latest version per branch
+            # Group by (type, branch) and keep only the latest version per slot
             latest_by_branch = {}
             for v in versions:
                 for pkg in history[name]["versions"][v]:
                     p_type = pkg["type"]
-                    if p_type == "deb":
-                        branch = pkg.get("branch", "stable")
-                    else:
-                        branch = p_type
+                    p_branch = pkg.get("branch") or get_package_branch(pkg.get("file", pkg.get("version", "")))
+                    pkg["branch"] = p_branch
+                    slot = f"{p_type}:{p_branch}"
                     
-                    if branch not in latest_by_branch:
-                        latest_by_branch[branch] = pkg
+                    if slot not in latest_by_branch:
+                        latest_by_branch[slot] = pkg
                     else:
-                        if version_key(pkg["version"]) > version_key(latest_by_branch[branch]["version"]):
-                            latest_by_branch[branch] = pkg
+                        if version_key(pkg["version"]) > version_key(latest_by_branch[slot]["version"]):
+                            latest_by_branch[slot] = pkg
 
             buttons_pkgs = list(latest_by_branch.values())
 

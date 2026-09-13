@@ -7,7 +7,8 @@
           "version": "21.5",
           "arch": "any",
           "type": "arch",
-          "file": "appinstall-21.5-1-any.pkg.tar.zst"
+          "file": "appinstall-21.5-1-any.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "appinstall",
@@ -24,7 +25,8 @@
           "version": "21.5-1",
           "arch": "noarch",
           "type": "rpm",
-          "file": "appinstall-21.5-1.noarch.rpm"
+          "file": "appinstall-21.5-1.noarch.rpm",
+          "branch": "stable"
         }
       ]
     }
@@ -37,7 +39,8 @@
           "version": "3.4.2",
           "arch": "x86_64",
           "type": "arch",
-          "file": "calamares-3.4.2-2-x86_64.pkg.tar.zst"
+          "file": "calamares-3.4.2-2-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -64,7 +67,8 @@
           "version": "1.0.0",
           "arch": "x86_64",
           "type": "arch",
-          "file": "driverman-1.0.0-1-x86_64.pkg.tar.zst"
+          "file": "driverman-1.0.0-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.15": [
@@ -87,7 +91,8 @@
           "version": "1.0.35",
           "arch": "any",
           "type": "arch",
-          "file": "droidtux-1.0.35-1-any.pkg.tar.zst"
+          "file": "droidtux-1.0.35-1-any.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "droidtux",
@@ -104,7 +109,8 @@
           "version": "1.0.35-1",
           "arch": "noarch",
           "type": "rpm",
-          "file": "droidtux-1.0.35-1.noarch.rpm"
+          "file": "droidtux-1.0.35-1.noarch.rpm",
+          "branch": "stable"
         }
       ]
     }
@@ -117,7 +123,8 @@
           "version": "50.4",
           "arch": "x86_64",
           "type": "arch",
-          "file": "gnome-control-center-50.4-1-x86_64.pkg.tar.zst"
+          "file": "gnome-control-center-50.4-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -130,7 +137,8 @@
           "version": "50.4",
           "arch": "x86_64",
           "type": "arch",
-          "file": "gnome-control-center-debug-50.4-1-x86_64.pkg.tar.zst"
+          "file": "gnome-control-center-debug-50.4-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -143,7 +151,8 @@
           "version": "50.4",
           "arch": "x86_64",
           "type": "arch",
-          "file": "gnome-keybindings-50.4-1-x86_64.pkg.tar.zst"
+          "file": "gnome-keybindings-50.4-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -156,7 +165,8 @@
           "version": "1.0.96",
           "arch": "x86_64",
           "type": "arch",
-          "file": "gnome-macos-remap-wayland-1.0.96-1-x86_64.pkg.tar.zst"
+          "file": "gnome-macos-remap-wayland-1.0.96-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.2+deb14": [
@@ -199,7 +209,8 @@
           "version": "2.0.8",
           "arch": "any",
           "type": "arch",
-          "file": "macboat-2.0.8-1-any.pkg.tar.zst"
+          "file": "macboat-2.0.8-1-any.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "macboat",
@@ -216,7 +227,8 @@
           "version": "2.0.8-1.fc44",
           "arch": "x86_64",
           "type": "rpm",
-          "file": "macboat-2.0.8-1.fc44.x86_64.rpm"
+          "file": "macboat-2.0.8-1.fc44.x86_64.rpm",
+          "branch": "stable"
         }
       ]
     }
@@ -229,7 +241,8 @@
           "version": "1.48.7",
           "arch": "x86_64",
           "type": "arch",
-          "file": "nautilus-1.48.7-2-x86_64.pkg.tar.zst"
+          "file": "nautilus-1.48.7-2-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "48.15": [
@@ -252,7 +265,8 @@
           "version": "1.48.7",
           "arch": "x86_64",
           "type": "arch",
-          "file": "nautilus-debug-1.48.7-2-x86_64.pkg.tar.zst"
+          "file": "nautilus-debug-1.48.7-2-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -265,7 +279,8 @@
           "version": "0.1.2",
           "arch": "x86_64",
           "type": "arch",
-          "file": "pamtester-0.1.2-4-x86_64.pkg.tar.zst"
+          "file": "pamtester-0.1.2-4-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -278,7 +293,8 @@
           "version": "1.0.0",
           "arch": "any",
           "type": "arch",
-          "file": "pulsar-pear-sound-theme-1.0.0-1-any.pkg.tar.zst"
+          "file": "pulsar-pear-sound-theme-1.0.0-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.3": [
@@ -301,7 +317,8 @@
           "version": "1.0.0",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-boot-icons-1.0.0-1-any.pkg.tar.zst"
+          "file": "pulsaros-boot-icons-1.0.0-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.21": [
@@ -324,7 +341,8 @@
           "version": "1.0.120",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-bootsound-1.0.120-1-any.pkg.tar.zst"
+          "file": "pulsaros-bootsound-1.0.120-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.116": [
@@ -367,7 +385,8 @@
           "version": "1.0.121",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-branding-1.0.121-1-any.pkg.tar.zst"
+          "file": "pulsaros-branding-1.0.121-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.117": [
@@ -410,7 +429,8 @@
           "version": "1.0.120",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-calamares-1.0.120-1-any.pkg.tar.zst"
+          "file": "pulsaros-calamares-1.0.120-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.106": [
@@ -467,7 +487,8 @@
           "version": "1.0.0",
           "arch": "x86_64",
           "type": "arch",
-          "file": "pulsaros-cloud-1.0.0-11-x86_64.pkg.tar.zst"
+          "file": "pulsaros-cloud-1.0.0-11-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.0-14": [
@@ -490,7 +511,8 @@
           "version": "1.0.117",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-control-center-button-1.0.117-1-any.pkg.tar.zst"
+          "file": "pulsaros-control-center-button-1.0.117-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -517,7 +539,8 @@
           "version": "1.0.120",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-effects-settings-1.0.120-1-any.pkg.tar.zst"
+          "file": "pulsaros-effects-settings-1.0.120-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.118": [
@@ -560,7 +583,8 @@
           "version": "1.0.1",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-emoji-fonts-1.0.1-1-any.pkg.tar.zst"
+          "file": "pulsaros-emoji-fonts-1.0.1-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.2": [
@@ -583,7 +607,8 @@
           "version": "1.0.118",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-essential-1.0.118-2-any.pkg.tar.zst"
+          "file": "pulsaros-essential-1.0.118-2-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.121": [
@@ -626,7 +651,8 @@
           "version": "1.0.122",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-global-menu-1.0.122-1-any.pkg.tar.zst"
+          "file": "pulsaros-global-menu-1.0.122-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.124": [
@@ -669,7 +695,8 @@
           "version": "1.0.124",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-gnome-1.0.124-1-any.pkg.tar.zst"
+          "file": "pulsaros-gnome-1.0.124-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.140": [
@@ -712,7 +739,8 @@
           "version": "1.0.114",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-grub-1.0.114-1-any.pkg.tar.zst"
+          "file": "pulsaros-grub-1.0.114-1-any.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "pulsaros-grub",
@@ -753,7 +781,8 @@
           "version": "1.0.8",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-hibernate-1.0.8-1-any.pkg.tar.zst"
+          "file": "pulsaros-hibernate-1.0.8-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.9": [
@@ -776,7 +805,8 @@
           "version": "1.0.1",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-live-wallpaper-1.0.1-1-any.pkg.tar.zst"
+          "file": "pulsaros-live-wallpaper-1.0.1-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.13": [
@@ -799,7 +829,8 @@
           "version": "1.0.1",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-meta-1.0.1-1-any.pkg.tar.zst"
+          "file": "pulsaros-meta-1.0.1-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.4": [
@@ -822,7 +853,8 @@
           "version": "1.0.121",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-plymouth-1.0.121-1-any.pkg.tar.zst"
+          "file": "pulsaros-plymouth-1.0.121-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.115": [
@@ -865,7 +897,8 @@
           "version": "1.0.138",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-recovery-1.0.138-1-any.pkg.tar.zst"
+          "file": "pulsaros-recovery-1.0.138-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.143": [
@@ -908,7 +941,8 @@
           "version": "1.0.118",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-refind-1.0.118-1-any.pkg.tar.zst"
+          "file": "pulsaros-refind-1.0.118-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.113": [
@@ -951,7 +985,8 @@
           "version": "1.0.121",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-sddm-1.0.121-1-any.pkg.tar.zst"
+          "file": "pulsaros-sddm-1.0.121-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.116": [
@@ -994,7 +1029,8 @@
           "version": "2.0.0",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-spotlight-launcher-2.0.0-5-any.pkg.tar.zst"
+          "file": "pulsaros-spotlight-launcher-2.0.0-5-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.34+deb14": [
@@ -1037,7 +1073,8 @@
           "version": "1.0.119",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-theme-1.0.119-1-any.pkg.tar.zst"
+          "file": "pulsaros-theme-1.0.119-1-any.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "pulsaros-theme",
@@ -1078,7 +1115,8 @@
           "version": "2.0.2",
           "arch": "any",
           "type": "arch",
-          "file": "pulsaros-welcome-2.0.2-1-any.pkg.tar.zst"
+          "file": "pulsaros-welcome-2.0.2-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "1.0.34+deb14": [
@@ -1121,7 +1159,8 @@
           "version": "0.1.4",
           "arch": "any",
           "type": "arch",
-          "file": "sayri-0.1.4-1-any.pkg.tar.zst"
+          "file": "sayri-0.1.4-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ],
       "0.1.5": [
@@ -1158,14 +1197,16 @@
           "version": "2.8.18",
           "arch": "aarch64",
           "type": "arch",
-          "file": "seafari-2.8.18-1-aarch64.pkg.tar.zst"
+          "file": "seafari-2.8.18-1-aarch64.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "seafari",
           "version": "2.8.18",
           "arch": "x86_64",
           "type": "arch",
-          "file": "seafari-2.8.18-1-x86_64.pkg.tar.zst"
+          "file": "seafari-2.8.18-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "seafari",
@@ -1190,14 +1231,16 @@
           "version": "2.8.18-1",
           "arch": "aarch64",
           "type": "rpm",
-          "file": "seafari-2.8.18-1.aarch64.rpm"
+          "file": "seafari-2.8.18-1.aarch64.rpm",
+          "branch": "stable"
         },
         {
           "name": "seafari",
           "version": "2.8.18-1",
           "arch": "x86_64",
           "type": "rpm",
-          "file": "seafari-2.8.18-1.x86_64.rpm"
+          "file": "seafari-2.8.18-1.x86_64.rpm",
+          "branch": "stable"
         }
       ]
     }
@@ -1210,7 +1253,8 @@
           "version": "1.0.96",
           "arch": "any",
           "type": "arch",
-          "file": "spotlight-gtk-1.0.96-1-any.pkg.tar.zst"
+          "file": "spotlight-gtk-1.0.96-1-any.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -1223,14 +1267,16 @@
           "version": "1.6.7",
           "arch": "aarch64",
           "type": "arch",
-          "file": "vozes-1.6.7-1-aarch64.pkg.tar.zst"
+          "file": "vozes-1.6.7-1-aarch64.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "vozes",
           "version": "1.6.7",
           "arch": "x86_64",
           "type": "arch",
-          "file": "vozes-1.6.7-1-x86_64.pkg.tar.zst"
+          "file": "vozes-1.6.7-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         },
         {
           "name": "vozes",
@@ -1255,14 +1301,16 @@
           "version": "1.6.7-1",
           "arch": "arm64",
           "type": "rpm",
-          "file": "vozes-1.6.7-1.arm64.rpm"
+          "file": "vozes-1.6.7-1.arm64.rpm",
+          "branch": "stable"
         },
         {
           "name": "vozes",
           "version": "1.6.7-1",
           "arch": "x86_64",
           "type": "rpm",
-          "file": "vozes-1.6.7-1.x86_64.rpm"
+          "file": "vozes-1.6.7-1.x86_64.rpm",
+          "branch": "stable"
         }
       ]
     }
@@ -1275,7 +1323,8 @@
           "version": "0.9.0",
           "arch": "x86_64",
           "type": "arch",
-          "file": "winboat-bin-0.9.0-1-x86_64.pkg.tar.zst"
+          "file": "winboat-bin-0.9.0-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }
@@ -1288,7 +1337,8 @@
           "version": "0.15.9",
           "arch": "x86_64",
           "type": "arch",
-          "file": "xremap-gnome-bin-0.15.9-1-x86_64.pkg.tar.zst"
+          "file": "xremap-gnome-bin-0.15.9-1-x86_64.pkg.tar.zst",
+          "branch": "stable"
         }
       ]
     }

@@ -132,14 +132,22 @@ echo
 echo "📊 $found/$total paquetes visibles en el índice de producción"
 
 # El dominio con reglas de caché propias puede tardar en refrescar: informativo.
+# Se buscan las distribuciones una a una porque un paquete puede vivir solo en
+# una de ellas (p. ej. las variantes +deb14 / +rolling).
 sample=${BASEFILES[0]}
-if curl -fsSL --max-time 30 "https://apt.inled.es/dists/unstable/main/binary-amd64/Packages.gz" 2>/dev/null \
-    | gzip -dc 2>/dev/null \
-    | grep -A8 -x "Package: ${sample%%_*}" | grep -qx "Version: $(echo "$sample" | cut -d_ -f2)"; then
-    echo "ℹ️  apt.inled.es ya sirve $sample"
-else
-    echo "ℹ️  apt.inled.es aún no sirve $sample (puede tardar por su propia caché)"
-fi
+sample_name=${sample%%_*}
+sample_ver=$(echo "$sample" | cut -d_ -f2)
+served=0
+for dist in "${DISTS[@]}"; do
+    if curl -fsSL --max-time 30 "https://apt.inled.es/dists/$dist/main/binary-amd64/Packages.gz" 2>/dev/null \
+        | gzip -dc 2>/dev/null \
+        | grep -A8 -x "Package: $sample_name" | grep -qx "Version: $sample_ver"; then
+        echo "ℹ️  apt.inled.es sirve $sample_name $sample_ver (dists/$dist)"
+        served=1
+        break
+    fi
+done
+[ "$served" -eq 1 ] || echo "ℹ️  apt.inled.es aún no sirve $sample (puede tardar por su propia caché)"
 
 if [ "${#PENDING[@]}" -eq 0 ]; then
     echo "✅ El despliegue llegó a producción"

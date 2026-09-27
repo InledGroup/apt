@@ -17,15 +17,18 @@
 #
 # Variables de entorno:
 #   PROD_URL    (por defecto https://inled-apt.pages.dev)
-#   RETRIES     (por defecto 5)  rondas de comprobación
-#   SLEEP_SECS  (por defecto 10) pausa entre rondas
+#   RETRIES     (por defecto 3)  rondas de comprobación
+#   SLEEP_SECS  (por defecto 5)  pausa entre rondas
+#   MAX_SECONDS (por defecto 120) tope de tiempo total de la comprobación
 # ==============================================================================
 set -uo pipefail
 
 PROD_URL="${PROD_URL:-https://inled-apt.pages.dev}"
 DISTS=(unstable stable forky rolling)
-RETRIES="${RETRIES:-5}"
-SLEEP_SECS="${SLEEP_SECS:-10}"
+RETRIES="${RETRIES:-3}"
+SLEEP_SECS="${SLEEP_SECS:-5}"
+MAX_SECONDS="${MAX_SECONDS:-120}"
+START_TS=$(date +%s)
 TMPDIR_V=$(mktemp -d)
 trap 'rm -rf "$TMPDIR_V"' EXIT
 
@@ -116,9 +119,12 @@ for (( round = 1; round <= RETRIES; round++ )); do
     done
     PENDING=("${still[@]+"${still[@]}"}")
     [ "${#PENDING[@]}" -eq 0 ] && break
-    if [ "$round" -lt "$RETRIES" ]; then
+    # Tope de tiempo: la verificación nunca debe alargar el workflow.
+    if [ "$round" -lt "$RETRIES" ] && [ $(( $(date +%s) - START_TS )) -lt "$MAX_SECONDS" ]; then
         echo "  ⏳ ${#PENDING[@]} sin verificar todavía (ronda $round/$RETRIES), reintento en ${SLEEP_SECS}s"
         sleep "$SLEEP_SECS"
+    else
+        break
     fi
 done
 

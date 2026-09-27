@@ -215,8 +215,24 @@ jobs:
           path: /tmp/pkg-summary.txt
           retention-days: 1
 
-      - name: Deploy to Cloudflare Pages
-        run: npx wrangler pages deploy public --project-name inled-apt --branch main --commit-dirty=true
+      - name: Deploy to Cloudflare Pages (production)
+        # Sin --branch: wrangler despliega sobre la rama de producción del
+        # proyecto. Con `--branch main` el deployment quedaba como *preview*
+        # y apt.inled.es seguía sirviendo el deployment anterior (índice
+        # congelado desde 2026-09-13, con un _headers antiguo de max-age=14400).
+        run: npx wrangler pages deploy public --project-name inled-apt --commit-dirty=true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Verify production index is up to date
+        # Si el deployment no llega a producción, el .deb nuevo está en el pool
+        # (302 al release) pero el índice sigue anuncia la versión vieja: apt
+        # instala el paquete antiguo sin avisar. Esto lo hace fallar visible.
+        run: |
+          chmod +x verify-production.sh
+          if [ -s /tmp/new-packages.txt ]; then
+            ./verify-production.sh $(cat /tmp/new-packages.txt)
+          else
+            ./verify-production.sh
+          fi

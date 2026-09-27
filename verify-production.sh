@@ -9,7 +9,7 @@
 # un 302 al release de GitHub) pero el índice (Packages/Packages.gz) queda
 # congelado, de modo que apt/pacman resuelven siempre la versión antigua.
 # Entre 2026-09-13 y 2026-09-27 pasó esto y las ISO construidas en CI
-# instalaron un pulsaros-recovery con la entrada rEFInd del recovery rota.
+# instalaban un pulsaros-recovery con la entrada rEFInd del recovery rota.
 #
 # Uso:
 #   ./verify-production.sh                 # comprueba current_assets.txt
@@ -17,16 +17,19 @@
 #
 # Variables de entorno:
 #   PROD_URL    (por defecto https://inled-apt.pages.dev)
-#   RETRIES     (por defecto 6)  intentos de comprobación
-#   SLEEP_SECS  (por defecto 10) pausa entre intentos
+#   RETRIES     (por defecto 5)  rondas de comprobación
+#   SLEEP_SECS  (por defecto 10) pausa entre rondas
 # ==============================================================================
 set -uo pipefail
 
 PROD_URL="${PROD_URL:-https://inled-apt.pages.dev}"
 DISTS=(unstable stable forky rolling)
-RETRIES="${RETRIES:-6}"
+RETRIES="${RETRIES:-5}"
 SLEEP_SECS="${SLEEP_SECS:-10}"
+TMPDIR_V=$(mktemp -d)
+trap 'rm -rf "$TMPDIR_V"' EXIT
 
+# --- Paquetes a comprobar ---------------------------------------------------
 FILES=("$@")
 if [ "${#FILES[@]}" -eq 0 ] && [ -f current_assets.txt ]; then
     while IFS= read -r line; do
@@ -36,43 +39,24 @@ if [ "${#FILES[@]}" -eq 0 ] && [ -f current_assets.txt ]; then
     done < current_assets.txt
 fi
 
-index_for() {  # $1 = distribución -> imprime el índice por stdout
-    local dist="$1" path body
-    for path in "dists/$dist/main/binary-amd64/Packages.gz" \
-                "dists/$dist/main/binary-amd64/Packages"; do
-        body=$(curl -fsSL --max-time 60 "$PROD_URL/$path" 2>/dev/null || true)
-        [ -n "$body" ] || continue
-        if [[ "$path" == *.gz ]]; then
-            printf '%s' "$body" | gzip -dc 2>/dev/null || true
-        else
-            printf '%s' "$body"
-        fi
-        return 0
-    done
-    return 1
-}
+NAMES=()
+VERS=()
+BASEFILES=()
+for f in "${FILES[@]}"; do
+    base=$(basename "$f")
+    [[ "$base" == *.deb ]] || continue
+    name=${base%%_*}
+    ver=$(echo "$base" | cut -d_ -f2)
+    [ -n "$ver" ] || continue
+    NAMES+=("$name")
+    VERS+=("$ver")
+    BASEFILES+=("$base")
+done
 
-# ¿Está este nombre_versión en el índice de producción de alguna distribución?
-in_production() {  # $1 = nombre  $2 = versión
-    local name="$1" ver="$2" attempt dist idx
-    for (( attempt = 1; attempt <= RETRIES; attempt++ )); do
-        for dist in "${DISTS[@]}"; do
-            idx=$(index_for "$dist") || continue
-            if printf '%s\n' "$idx" | grep -A8 -x "Package: $name" | grep -qx "Version: $ver"; then
-                return 0
-            fi
-        done
-        if [ "$attempt" -lt "$RETRIES" ]; then
-            echo "     ⏳ aún no visible en producción (intento $attempt/$RETRIES), reintento en ${SLEEP_SECS}s"
-            sleep "$SLEEP_SECS"
-        fi
-    done
-    return 1
-}
-
-# --- Sin nada que comprobar: solo que el índice responda --------------------
-if [ "${#FILES[@]}" -eq 0 ]; then
-    if index_for unstable >/dev/null; then
+if [ "${#NAMES[@]}" -eq 0 ]; then
+    # Sin paquetes que comprobar: basta con que el índice de producción exista.
+    if curl -fsSL --max-time 60 \
+        "$PROD_URL/dists/unstable/main/binary-amd64/Packages.gz" 2>/dev/null | gzip -dc >/dev/null 2>&1; then
         echo "✅ El índice de producción ($PROD_URL) responde"
         exit 0
     fi
@@ -80,48 +64,90 @@ if [ "${#FILES[@]}" -eq 0 ]; then
     exit 1
 fi
 
-total=0
-found=0
-missing=()
+# --- Descarga los índices UNA vez por ronda ---------------------------------
+fetch_indexes() {
+    local dist path out
+    rm -f "$TMPDIR_V"/idx.*
+    for dist in "${DISTS[@]}"; do
+        out="$TMPDIR_V/idx.$dist"
+        for path in "dists/$dist/main/binary-amd64/Packages.gz" \
+                    "dists/$dist/main/binary-amd64/Packages"; do
+            if curl -fsSL --max-time 60 "$PROD_URL/$path" -o "$TMPDIR_V/raw" 2>/dev/null; then
+                if [[ "$path" == *.gz ]]; then
+                    gzip -dc "$TMPDIR_V/raw" > "$out" 2>/dev/null || : > "$out"
+                else
+                    cp "$TMPDIR_V/raw" "$out"
+                fi
+                [ -s "$out" ] && break
+            fi
+        done
+    done
+    rm -f "$TMPDIR_V/raw"
+}
 
-for f in "${FILES[@]}"; do
-    base=$(basename "$f")
-    [[ "$base" == *.deb ]] || continue
-    name=${base%%_*}
-    ver=$(echo "$base" | cut -d_ -f2)
-    [ -n "$ver" ] || continue
-    total=$(( total + 1 ))
-    if in_production "$name" "$ver"; then
-        echo "  ✅ $name $ver"
-        found=$(( found + 1 ))
-    else
-        echo "  ❌ $name $ver no está en el índice de producción"
-        missing+=("$base")
+# nombre + versión presentes en el mismo registro de algún índice
+in_indexes() {  # $1 = nombre  $2 = versión
+    local name="$1" ver="$2" f
+    for f in "$TMPDIR_V"/idx.*; do
+        [ -s "$f" ] || continue
+        if grep -A8 -x "Package: $name" "$f" | grep -qx "Version: $ver"; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+declare -a PENDING=()
+for i in "${!NAMES[@]}"; do PENDING+=("$i"); done
+
+found=0
+total=${#NAMES[@]}
+
+for (( round = 1; round <= RETRIES; round++ )); do
+    fetch_indexes
+    still=()
+    for i in "${PENDING[@]}"; do
+        if in_indexes "${NAMES[$i]}" "${VERS[$i]}"; then
+            echo "  ✅ ${NAMES[$i]} ${VERS[$i]}"
+            found=$(( found + 1 ))
+        else
+            still+=("$i")
+        fi
+    done
+    PENDING=("${still[@]+"${still[@]}"}")
+    [ "${#PENDING[@]}" -eq 0 ] && break
+    if [ "$round" -lt "$RETRIES" ]; then
+        echo "  ⏳ ${#PENDING[@]} sin verificar todavía (ronda $round/$RETRIES), reintento en ${SLEEP_SECS}s"
+        sleep "$SLEEP_SECS"
     fi
 done
 
 echo
-echo "📊 $found/$total paquetes nuevos visibles en producción"
+echo "📊 $found/$total paquetes visibles en el índice de producción"
 
-# El dominio con cache-control propio puede tardar en refrescar: informativo.
-if [ "$total" -gt 0 ]; then
-    last=${FILES[${#FILES[@]}-1]}
-    lname=$(basename "$last")
-    [[ "$lname" == *.deb ]] && curl -fsSL --max-time 30 \
-        "https://apt.inled.es/dists/unstable/main/binary-amd64/Packages.gz" 2>/dev/null \
-        | gzip -dc 2>/dev/null \
-        | grep -A8 -x "Package: ${lname%%_*}" | grep -x "Version: $(echo "$lname" | cut -d_ -f2)" \
-        | sed 's/^/ℹ️  apt.inled.es (puede tardar por caché): /' || true
+# El dominio con reglas de caché propias puede tardar en refrescar: informativo.
+sample=${BASEFILES[0]}
+if curl -fsSL --max-time 30 "https://apt.inled.es/dists/unstable/main/binary-amd64/Packages.gz" 2>/dev/null \
+    | gzip -dc 2>/dev/null \
+    | grep -A8 -x "Package: ${sample%%_*}" | grep -qx "Version: $(echo "$sample" | cut -d_ -f2)"; then
+    echo "ℹ️  apt.inled.es ya sirve $sample"
+else
+    echo "ℹ️  apt.inled.es aún no sirve $sample (puede tardar por su propia caché)"
 fi
 
-if [ "$total" -gt 0 ] && [ "$found" -eq 0 ]; then
-    echo "::error::El despliegue NO ha llegado a producción. apt.inled.es sigue sirviendo el índice antiguo (${missing[*]})."
-    echo "::error::Suele significar que 'wrangler pages deploy' se ejecutó con un --branch que no es la rama de producción."
+if [ "${#PENDING[@]}" -eq 0 ]; then
+    echo "✅ El despliegue llegó a producción"
+    exit 0
+fi
+
+missing=()
+for i in "${PENDING[@]}"; do missing+=("${BASEFILES[$i]}"); done
+
+if [ "$found" -eq 0 ]; then
+    echo "::error::El despliegue NO ha llegado a producción. El índice sigue announcing la versión antigua: ${missing[*]}"
+    echo "::error::Normalmente significa que 'wrangler pages deploy' se ejecutó con un --branch que no es la rama de producción."
     exit 1
 fi
 
-if [ "${#missing[@]}" -gt 0 ]; then
-    echo "::warning::Estos paquetes no se han visto en producción (puede ser que el nombre de fichero y la versión difieran): ${missing[*]}"
-fi
-
+echo "::warning::No verificados en producción (puede que el nombre de fichero y la versión difieran): ${missing[*]}"
 echo "✅ El despliegue llegó a producción"

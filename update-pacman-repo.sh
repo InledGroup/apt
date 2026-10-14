@@ -127,7 +127,14 @@ sync_arch_repo() {
 
     if [ ${#pkgs_to_add[@]} -gt 0 ]; then
         echo "Running repo-add in $target_dir for ${#pkgs_to_add[@]} packages..."
-        repo-add --sign --key "$GPG_FINGERPRINT" "$db_file" "${pkgs_to_add[@]}"
+        # --prevent-downgrade: repo-add keys entries by package *name* and deletes
+        # the existing entry before writing a new one, so when both the stable and
+        # the unstable build of a package are active assets the last one added
+        # wins. That let an older stable build silently replace a newer unstable
+        # one in the unstable channel (e.g. pulsaros-gnome 1.0.171.unstable-6 was
+        # replaced by 1.0.124-1). With this flag repo-add keeps whichever version
+        # is higher, so an unstable build is never displaced by an older stable one.
+        repo-add --sign --key "$GPG_FINGERPRINT" --prevent-downgrade "$db_file" "${pkgs_to_add[@]}"
     fi
 
     # Dereference all symlinks in target_dir for Cloudflare Pages
